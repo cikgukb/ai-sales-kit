@@ -1,0 +1,89 @@
+
+<style>
+  .fw { padding: 1.5rem 0; font-family: var(--font-sans); }
+  .section { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); margin-bottom: 1.25rem; overflow: hidden; }
+  .section-head { padding: 14px 20px; display: flex; align-items: center; gap: 12px; }
+  .badge { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500; flex-shrink: 0; }
+  .section-title { font-size: 16px; font-weight: 500; color: var(--color-text-primary); }
+  .section-sub { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border-top: 0.5px solid var(--color-border-tertiary); }
+  .cell { padding: 14px 20px; border-right: 0.5px solid var(--color-border-tertiary); border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .cell:nth-child(even) { border-right: none; }
+  .cell:last-child, .cell:nth-last-child(2):nth-child(odd) { border-bottom: none; }
+  .cell-label { font-size: 11px; font-weight: 500; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+  .cell-val { font-size: 13px; color: var(--color-text-primary); line-height: 1.5; }
+  .tip { padding: 10px 20px; background: var(--color-background-secondary); border-top: 0.5px solid var(--color-border-tertiary); font-size: 12px; color: var(--color-text-secondary); line-height: 1.6; }
+
+  .s1 .section-head { background: #EEEDFE; }
+  .s1 .badge { background: #AFA9EC; color: #26215C; }
+  .s2 .section-head { background: #E1F5EE; }
+  .s2 .badge { background: #5DCAA5; color: #04342C; }
+  .s3 .section-head { background: #FAEEDA; }
+  .s3 .badge { background: #EF9F27; color: #412402; }
+
+  @media (prefers-color-scheme: dark) {
+    .s1 .section-head { background: #26215C; }
+    .s1 .badge { background: #3C3489; color: #CECBF6; }
+    .s2 .section-head { background: #04342C; }
+    .s2 .badge { background: #0F6E56; color: #9FE1CB; }
+    .s3 .section-head { background: #412402; }
+    .s3 .badge { background: #854F0B; color: #FAC775; }
+    .s1 .section-title, .s2 .section-title, .s3 .section-title { color: var(--color-text-primary); }
+  }
+</style>
+<div class="fw">
+
+  <div class="section s1">
+    <div class="section-head">
+      <div class="badge">1</div>
+      <div>
+        <div class="section-title">Title</div>
+        <div class="section-sub">The hook — captures attention in under 2 seconds</div>
+      </div>
+    </div>
+    <div class="grid">
+      <div class="cell"><div class="cell-label">Wording</div><div class="cell-val">Short, punchy, benefit-driven. 3–7 words max. No jargon.</div></div>
+      <div class="cell"><div class="cell-label">Typography</div><div class="cell-val">Bold, high-contrast typeface. Largest element on the poster.</div></div>
+      <div class="cell"><div class="cell-label">Placement</div><div class="cell-val">Top third or center. Never buried below the fold.</div></div>
+      <div class="cell"><div class="cell-label">Tone</div><div class="cell-val">Match brand voice: aspirational, urgent, emotional, or informational.</div></div>
+    </div>
+    <div class="tip">💡 Specify: the exact headline text, the emotion it should trigger (e.g. excitement, curiosity, trust), and target audience.</div>
+  </div>
+
+  <div class="section s2">
+    <div class="section-head">
+      <div class="badge">2</div>
+      <div>
+        <div class="section-title">Main image</div>
+        <div class="section-sub">The anchor — communicates value at a glance</div>
+      </div>
+    </div>
+    <div class="grid">
+      <div class="cell"><div class="cell-label">Subject</div><div class="cell-val">Product, person, lifestyle scene, or abstract visual metaphor.</div></div>
+      <div class="cell"><div class="cell-label">Style</div><div class="cell-val">Photorealistic, illustrated, flat design, 3D render, or collage.</div></div>
+      <div class="cell"><div class="cell-label">Composition</div><div class="cell-val">Rule of thirds, centred hero, or full bleed. Leave breathing room for text.</div></div>
+      <div class="cell"><div class="cell-label">Colour palette</div><div class="cell-val">2–4 dominant colours. Match or contrast brand colours intentionally.</div></div>
+      <div class="cell"><div class="cell-label">Mood / lighting</div><div class="cell-val">Bright & clean, dramatic & dark, warm & inviting, cool & minimal.</div></div>
+      <div class="cell"><div class="cell-label">Background</div><div class="cell-val">Solid, gradient, bokeh, texture, or transparent. Ensure title readability.</div></div>
+    </div>
+    <div class="tip">💡 Specify: what the image depicts, the visual style, mood, colours, and whether the product/person should be prominent or secondary.</div>
+  </div>
+
+  <div class="section s3">
+    <div class="section-head">
+      <div class="badge">3</div>
+      <div>
+        <div class="section-title">Call to action</div>
+        <div class="section-sub">The closer — tells the viewer exactly what to do next</div>
+      </div>
+    </div>
+    <div class="grid">
+      <div class="cell"><div class="cell-label">CTA text</div><div class="cell-val">Action verb + clear outcome. e.g. "Shop now", "Book a free call", "Download today".</div></div>
+      <div class="cell"><div class="cell-label">Visual treatment</div><div class="cell-val">Button shape, bold text block, or badge. Must stand out from the main image.</div></div>
+      <div class="cell"><div class="cell-label">Placement</div><div class="cell-val">Bottom third is standard. Near the product if layout allows.</div></div>
+      <div class="cell"><div class="cell-label">Supporting info</div><div class="cell-val">Price, deadline, URL, QR code, or offer details placed close to CTA.</div></div>
+    </div>
+    <div class="tip">💡 Specify: the exact CTA phrase, urgency level (e.g. limited offer vs evergreen), and any supporting detail like a price or date.</div>
+  </div>
+
+</div>

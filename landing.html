@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Sales Kit - Sistem Jana Sales Untuk Usahawan Mikro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #050505;
+            --bg-secondary: #111111;
+            --text-main: #FFFFFF;
+            --text-muted: #A1A1AA;
+            --primary: #00F0FF;
+            --secondary: #9B51E0;
+            --accent: #E11D48;
+            --success: #10B981;
+            --border: rgba(255, 255, 255, 0.1);
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --font-sans: 'Inter', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        .section {
+            padding: 6rem 0;
+        }
+
+        .text-gradient {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .heading-xl {
+            font-size: clamp(2.5rem, 5vw, 4.5rem);
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+        }
+
+        .heading-lg {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .text-lg {
+            font-size: 1.125rem;
+            color: var(--text-muted);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background: rgba(155, 81, 224, 0.1);
+            color: var(--secondary);
+            border: 1px solid rgba(155, 81, 224, 0.2);
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, var(--primary), #0077FF);
+            color: #000;
+            font-weight: 700;
+            font-size: 1.125rem;
+            padding: 1.25rem 2.5rem;
+            border-radius: 999px;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(0, 240, 255, 0.4);
+        }
+
+        .btn-outline {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            color: var(--text-main);
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 999px;
+            text-decoration: none;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--text-main);
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(0, 240, 255, 0.3);
+        }
+
+        .hero-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(0,240,255,0.15) 0%, rgba(155,81,224,0.05) 40%, rgba(0,0,0,0) 70%);
+            pointer-events: none;
+            z-index: -1;
+            border-radius: 50%;
+        }
+
+        .animate-on-scroll {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .animate-on-scroll.animate-fade-in {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        nav {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            background: rgba(5,5,5,0.8);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        footer {
+            padding: 4rem 0;
+            text-align: center;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+        }
+
+        .feature-icon-wrapper {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .heading-xl { font-size: 2.5rem; }
+            .section { padding: 4rem 0; }
+            .grid-2 { grid-template-columns: 1fr !important; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; font-weight: 800; font-size: 1.25rem;">
+                <i data-lucide="zap" style="color: var(--primary); fill: var(--primary);"></i>
+                <span class="text-gradient">AI SALES KIT</span>
+            </div>
+            <div>
+                <a href="#cta" class="btn-outline" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Dapatkan Akses</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="section" style="position: relative; overflow: hidden; padding-top: 4rem;">
+        <div class="hero-glow"></div>
+        <div class="container" style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2rem;">
+            <div class="badge">Sistem Jana Sales Untuk Usahawan Mikro</div>
+            
+            <h1 class="heading-xl" style="max-width: 900px;">
+                Sistem Tarik Pelanggan & <span class="text-gradient">Close Sale</span> Dengan Mudah
+            </h1>
+            
+            <p class="text-lg" style="max-width: 600px; font-size: 1.25rem; margin-bottom: 1rem;">
+                Bukan sekadar tool biasa. Ini sistem lengkap yang bantu anda hasilkan bahan marketing power & follow up sampai jadi sale.
+            </p>
+
+            <div style="display: flex; flex-direction: column; gap: 1rem; text-align: left; background: var(--glass-bg); padding: 1.5rem 2rem; border-radius: 16px; border: 1px solid var(--border); margin-bottom: 1rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <i data-lucide="check-circle-2" style="color: var(--primary);"></i>
+                    <span style="font-weight: 500;">Hasilkan poster iklan profesional (boleh upload gambar sendiri!)</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <i data-lucide="check-circle-2" style="color: var(--primary);"></i>
+                    <span style="font-weight: 500;">Tulis ayat jualan yang buat orang nak beli</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <i data-lucide="check-circle-2" style="color: var(--primary);"></i>
+                    <span style="font-weight: 500;">Guna skrip WhatsApp untuk close sale</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <i data-lucide="check-circle-2" style="color: var(--primary);"></i>
+                    <span style="font-weight: 500;">Ikut langkah jelas untuk dapatkan sale pertama</span>
+                </div>
+            </div>
+
+            <a href="#cta" class="btn-primary">
+                Mula Buat Sale Sekarang <i data-lucide="arrow-right"></i>
+            </a>
+
+            <div style="margin-top: 3rem; width: 100%; max-width: 800px; border-radius: 24px; overflow: hidden; border: 1px solid var(--border); box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+                <!-- Gantikan hero.png dengan URL gambar sebenar sistem anda -->
+                <img src="hero.png" alt="AI Sales Dashboard" style="width: 100%; height: auto; display: block;">
+            </div>
+        </div>
+    </header>
+
+    <!-- Features Section -->
+    <section class="section" style="background-color: var(--bg-secondary); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+        <div class="container">
+            <div style="text-align: center; margin-bottom: 4rem;" class="animate-on-scroll">
+                <h2 class="heading-lg">Apa Anda Akan Dapat</h2>
+                <p class="text-lg" style="margin-top: 1rem;">Sistem step-by-step dari tarik trafik sampai close sale.</p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
+                
+                <div class="glass-card animate-on-scroll">
+                    <div class="feature-icon-wrapper" style="background: rgba(0, 240, 255, 0.1); margin-bottom: 1.5rem;">
+                        <i data-lucide="image" style="color: var(--primary);"></i>
+                    </div>
+                    <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.75rem;">1. Poster Iklan Siap Jual</h3>
+                    <p style="color: var(--text-muted);">
+                        Upload gambar produk anda atau biar AI jana dari kosong — hasilnya poster iklan profesional siap post ke media sosial.
+                    </p>
+                </div>
+
+                <div class="glass-card animate-on-scroll">
+                    <div class="feature-icon-wrapper" style="background: rgba(155, 81, 224, 0.1); margin-bottom: 1.5rem;">
+                        <i data-lucide="pen-tool" style="color: var(--secondary);"></i>
+                    </div>
+                    <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.75rem;">2. Copywriting Jualan</h3>
+                    <p style="color: var(--text-muted);">
+                        Ayat yang fokus pada matlamat sebenar: tarik perhatian, sentuh masalah customer, dan paksa tindakan (PM/WhatsApp).
+                    </p>
+                </div>
+
+                <div class="glass-card animate-on-scroll">
+                    <div class="feature-icon-wrapper" style="background: rgba(16, 185, 129, 0.1); margin-bottom: 1.5rem;">
+                        <i data-lucide="message-square" style="color: var(--success);"></i>
+                    </div>
+                    <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.75rem;">3. Skrip Follow-Up WhatsApp</h3>
+                    <p style="color: var(--text-muted);">
+                        Tak tahu nak reply customer? Kami sediakan ayat balas, ayat close sale, dan ayat kebal "nanti saya fikir dulu".
+                    </p>
+                </div>
+
+                <div class="glass-card animate-on-scroll">
+                    <div class="feature-icon-wrapper" style="background: rgba(225, 29, 72, 0.1); margin-bottom: 1.5rem;">
+                        <i data-lucide="trending-up" style="color: var(--accent);"></i>
+                    </div>
+                    <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.75rem;">4. Pelan Tindakan 24 Jam</h3>
+                    <p style="color: var(--text-muted);">
+                        Bukan cuma teori—terus buat! Langkah demi langkah post content, siapa nak follow up, dan cara close sale on the spot.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Differentiator Section -->
+    <section class="section">
+        <div class="container">
+            <div class="grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;">
+                <div class="animate-on-scroll">
+                    <!-- Gantikan success.png dengan URL gambar sebenar anda -->
+                    <img src="success.png" alt="Sales vs Like" style="width: 100%; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(155, 81, 224, 0.2);">
+                </div>
+                
+                <div class="animate-on-scroll">
+                    <div class="badge" style="background: rgba(0,240,255,0.1); color: var(--primary); border-color: rgba(0,240,255,0.2);">Kenapa Kami Berbeza</div>
+                    <h2 class="heading-lg" style="margin-bottom: 1.5rem;">Fokus Kepada Kemenangan Sebenar</h2>
+                    <p class="text-lg" style="margin-bottom: 2rem;">
+                        Kebanyakan tool di luar sana hanya bantu anda buat content kosong yang nampak lawa tapi tak convert.
+                    </p>
+                    
+                    <div style="background: linear-gradient(90deg, rgba(16,185,129,0.1) 0%, transparent 100%); padding: 1.5rem; border-left: 4px solid var(--success); border-radius: 0 8px 8px 0; font-size: 1.25rem; font-weight: 600;">
+                        Sistem ini fokus untuk dapatkan <span style="color: var(--success);">SALE</span>, bukan sekadar <span style="text-decoration: line-through; opacity: 0.5;">LIKE</span>.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Who is it for -->
+    <section class="section" style="background-color: var(--bg-secondary); border-top: 1px solid var(--border);">
+        <div class="container">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 3rem;">
+                
+                <div class="glass-card animate-on-scroll" style="border-color: rgba(16, 185, 129, 0.3);">
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
+                        <i data-lucide="check-circle-2" style="width:32px; height:32px; color: var(--success);"></i>
+                        <h3 class="heading-lg" style="font-size: 1.5rem;">Siapa Sesuai Guna</h3>
+                    </div>
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: 1.25rem;">
+                        <li style="display: flex; align-items: flex-start; gap: 0.75rem;">
+                            <i data-lucide="check" style="color: var(--success); margin-top: 4px;"></i>
+                            <span style="font-size: 1.125rem;">Usahawan kecil / bisnes dari rumah</span>
+                        </li>
+                        <li style="display: flex; align-items: flex-start; gap: 0.75rem;">
+                            <i data-lucide="check" style="color: var(--success); margin-top: 4px;"></i>
+                            <span style="font-size: 1.125rem;">Seller TikTok, Shopee, atau WhatsApp</span>
+                        </li>
+                        <li style="display: flex; align-items: flex-start; gap: 0.75rem;">
+                            <i data-lucide="check" style="color: var(--success); margin-top: 4px;"></i>
+                            <span style="font-size: 1.125rem;">Yang nak buat duit cepat tanpa pening marketing</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="glass-card animate-on-scroll" style="border-color: rgba(225, 29, 72, 0.3);">
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
+                        <i data-lucide="x-circle" style="width:32px; height:32px; color: var(--accent);"></i>
+                        <h3 class="heading-lg" style="font-size: 1.5rem;">Siapa Tak Sesuai</h3>
+                    </div>
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: 1.25rem;">
+                        <li style="display: flex; align-items: flex-start; gap: 0.75rem;">
+                            <i data-lucide="x-circle" style="color: var(--accent); margin-top: 4px;"></i>
+                            <span style="font-size: 1.125rem; color: var(--text-muted);">Yang suka belajar teori semata-mata tapi tak buat</span>
+                        </li>
+                        <li style="display: flex; align-items: flex-start; gap: 0.75rem;">
+                            <i data-lucide="x-circle" style="color: var(--accent); margin-top: 4px;"></i>
+                            <span style="font-size: 1.125rem; color: var(--text-muted);">Yang nak 'design cantik' sahaja tanpa niat menjual</span>
+                        </li>
+                        <li style="display: flex; align-items: flex-start; gap: 0.75rem;">
+                            <i data-lucide="x-circle" style="color: var(--accent); margin-top: 4px;"></i>
+                            <span style="font-size: 1.125rem; color: var(--text-muted);">Yang tak serious nak tingkatkan sales bisnes mereka</span>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Closing & Urgency -->
+    <section class="section" id="cta" style="position: relative; overflow: hidden;">
+        <div class="hero-glow" style="background: radial-gradient(circle, rgba(155,81,224,0.15) 0%, rgba(0,240,255,0.05) 40%, rgba(0,0,0,0) 70%);"></div>
+        
+        <div class="container" style="max-width: 800px; margin: 0 auto;">
+            <div class="glass-card animate-on-scroll" style="text-align: center; padding: 4rem 2rem; border: 1px solid rgba(155, 81, 224, 0.3);">
+                <h2 class="heading-lg" style="margin-bottom: 2rem;">Keputusan Di Tangan Anda</h2>
+                
+                <div style="display: flex; flex-direction: column; gap: 1rem; text-align: left; background: rgba(0,0,0,0.5); padding: 2rem; border-radius: 12px; margin-bottom: 2rem;">
+                    <p style="font-size: 1.125rem; color: var(--text-muted);">Kalau anda masih buat cara lama (post tanpa strategi, tunggu customer datang, dan harap nasib):</p>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--accent); font-weight: 600;">
+                        <i data-lucide="alert-circle"></i>
+                        Jangan pelik kalau sales tak bergerak.
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 1rem; text-align: left; background: rgba(0,240,255,0.05); padding: 2rem; border-radius: 12px; margin-bottom: 3rem; border: 1px solid rgba(0,240,255,0.2);">
+                    <p style="font-size: 1.125rem; font-weight: 600;">Tapi kalau anda ikut sistem ini:</p>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--primary);">
+                        <i data-lucide="arrow-right"></i>
+                        Anda tahu apa nak buat
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--primary);">
+                        <i data-lucide="arrow-right"></i>
+                        Anda tahu apa nak cakap
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--primary);">
+                        <i data-lucide="arrow-right"></i>
+                        Anda tahu cara close sale
+                    </div>
+                </div>
+
+                <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 2rem;">
+                    Soalan terakhir: Nak terus buat content kosong... atau nak mula buat <span style="color: var(--success);">SALE</span>?
+                </h3>
+
+                <a href="#" class="btn-primary" style="width: 100%; max-width: 400px; font-size: 1.25rem;">
+                    Dapatkan Akses Sekarang <i data-lucide="arrow-right"></i>
+                </a>
+
+                <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; color: var(--accent); margin-top: 1.5rem; font-weight: 600;">
+                    <i data-lucide="clock"></i>
+                    <span>Akses ini mungkin akan ditutup bila kuota penuh. Jangan tunggu orang lain jalan dulu.</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>© 2026 AI Sales Kit. Hakcipta Terpelihara.</p>
+        </div>
+    </footer>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // Intersection Observer for Animations
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate-fade-in');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.animate-on-scroll').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Smooth Scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>
