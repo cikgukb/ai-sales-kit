@@ -1,12 +1,5 @@
 {
-  "rewrites": [
-    {
-      "source": "/replicate-api/:path*",
-      "destination": "https://api.replicate.com/:path*"
-    },
-    {
-      "source": "/imagerouter-api/:path*",
-      "destination": "https://api.imagerouter.io/:path*"
-    }
-  ]
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite"
 }

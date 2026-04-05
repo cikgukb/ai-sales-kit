@@ -2,6 +2,9 @@
 const getReplicateKey = () => import.meta.env.VITE_REPLICATE_API_TOKEN || localStorage.getItem('REPLICATE_API_TOKEN');
 const getImageRouterKey = () => import.meta.env.VITE_IMAGEROUTER_API_KEY || localStorage.getItem('IMAGEROUTER_API_KEY');
 
+// Detect if running on Vercel production or local dev
+const isProduction = () => !import.meta.env.DEV;
+
 export type SalesInput = {
   jenisProduk: string;
   targetCustomer: string;
@@ -95,20 +98,28 @@ export const generateSalesKit = async (input: SalesInput): Promise<GenerateRespo
   Pastikan respons HANYA mengandungi objek JSON tanpa markdown blockquotes tambahan jika boleh, atau pastikan ia boleh dipars. Return raw JSON.
   `;
 
-  const response = await fetch("/replicate-api/v1/models/anthropic/claude-3.7-sonnet/predictions", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${replicateKey}`,
-      "Content-Type": "application/json",
-      "Prefer": "wait"
-    },
-    body: JSON.stringify({
-      input: {
-        prompt: prompt,
-        max_tokens: 4000
-      }
-    })
-  });
+  const body = { input: { prompt: prompt, max_tokens: 4000 } };
+
+  let response: Response;
+  if (isProduction()) {
+    // Production: use Vercel serverless function (API key stays server-side)
+    response = await fetch("/api/replicate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+  } else {
+    // Local dev: use Vite proxy
+    response = await fetch("/replicate-api/v1/models/anthropic/claude-3.7-sonnet/predictions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${replicateKey}`,
+        "Content-Type": "application/json",
+        "Prefer": "wait"
+      },
+      body: JSON.stringify(body)
+    });
+  }
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -196,14 +207,19 @@ async function editImageIntoPoster(apiKey: string, posterPrompt: string, base64D
   formData.append('model', 'black-forest-labs/flux-kontext-pro');
   formData.append('response_format', 'url');
 
-  const response = await fetch("/imagerouter-api/v1/openai/images/edits", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${apiKey}`
-      // Content-Type is automatically set by FormData
-    },
-    body: formData
-  });
+  let response: Response;
+  if (isProduction()) {
+    response = await fetch("/api/imageedit", {
+      method: "POST",
+      body: formData
+    });
+  } else {
+    response = await fetch("/imagerouter-api/v1/openai/images/edits", {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${apiKey}` },
+      body: formData
+    });
+  }
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -230,19 +246,25 @@ async function editImageIntoPoster(apiKey: string, posterPrompt: string, base64D
 async function generatePosterFromPrompt(apiKey: string, imagePrompt: string, model?: string): Promise<string> {
   const selectedModel = model || "google/nano-banana-2";
   
-  const response = await fetch("/imagerouter-api/v1/openai/images/generations", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${apiKey}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      prompt: imagePrompt,
-      model: selectedModel,
-      n: 1,
-      size: "1024x1024"
-    }),
-  });
+  const body = { prompt: imagePrompt, model: selectedModel, n: 1, size: "1024x1024" };
+
+  let response: Response;
+  if (isProduction()) {
+    response = await fetch("/api/imagegen", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+  } else {
+    response = await fetch("/imagerouter-api/v1/openai/images/generations", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(body)
+    });
+  }
 
   if (!response.ok) {
     const errorText = await response.text();
