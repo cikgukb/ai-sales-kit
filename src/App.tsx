@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Zap, Sparkles } from 'lucide-react';
+import { Analytics } from '@vercel/analytics/react';
 import InputForm from './components/InputForm';
 import SalesDashboard from './components/SalesDashboard';
 import LandingPage from './components/LandingPage';
@@ -110,58 +111,66 @@ function App() {
     }
     
     return (
-      <div className="container relative" style={{ minHeight: '100vh', paddingTop: '2rem' }}>
-        <div className="hero-glow"></div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 800, fontSize: '1.25rem' }}>
-            <Zap color="var(--primary)" fill="var(--primary)" size={24} />
-            <span className="text-gradient">AI SALES KIT</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <button className="btn-outline" onClick={() => supabase?.auth.signOut()} style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', borderColor: 'var(--accent)', color: '#fca5a5' }}>
-              Log Keluar
-            </button>
-            <button className="btn-outline" onClick={() => setShowApp(false)} style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}>
-              Kembali
-            </button>
-          </div>
-        </div>
-        
-        <header className="section" style={{ textAlign: 'center', paddingBottom: '2rem' }}>
-          <h1 className="heading-xl text-gradient" style={{ marginBottom: '1rem' }}>AI Sales Kit</h1>
-          <p className="text-lg">Jana bahan jualan profesional untuk perniagaan anda dalam beberapa ketika sahaja.</p>
-        </header>
-
-        {errorMsg && (
-          <div style={{ background: 'rgba(239, 68, 68, 0.2)', border: '1px solid #ef4444', color: '#fca5a5', padding: '16px', borderRadius: '8px', marginBottom: '24px', textAlign: 'center' }}>
-            {errorMsg}
-          </div>
-        )}
-
-        {!result && (
-          <InputForm onSubmit={processSalesKit} isLoading={isLoading} />
-        )}
-
-        {result && (
-          <div className="animate-fade-in">
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
-              <button 
-                className="btn-outline" 
-                onClick={() => { setResult(null); setImageUrl(undefined); }}
-              >
-                <Sparkles size={16} style={{ marginRight: '8px' }} /> Jana Kit Baru
+      <>
+        <Analytics />
+        <div className="container relative" style={{ minHeight: '100vh', paddingTop: '2rem' }}>
+          <div className="hero-glow"></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 800, fontSize: '1.25rem' }}>
+              <Zap color="var(--primary)" fill="var(--primary)" size={24} />
+              <span className="text-gradient">AI SALES KIT</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <button className="btn-outline" onClick={() => supabase?.auth.signOut()} style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', borderColor: 'var(--accent)', color: '#fca5a5' }}>
+                Log Keluar
+              </button>
+              <button className="btn-outline" onClick={() => setShowApp(false)} style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}>
+                Kembali
               </button>
             </div>
-            <SalesDashboard data={result} imageUrl={imageUrl} />
           </div>
-        )}
-        <Footer />
-      </div>
+          
+          <header className="section" style={{ textAlign: 'center', paddingBottom: '2rem' }}>
+            <h1 className="heading-xl text-gradient" style={{ marginBottom: '1rem' }}>AI Sales Kit</h1>
+            <p className="text-lg">Jana bahan jualan profesional untuk perniagaan anda dalam beberapa ketika sahaja.</p>
+          </header>
+
+          {errorMsg && (
+            <div style={{ background: 'rgba(239, 68, 68, 0.2)', border: '1px solid #ef4444', color: '#fca5a5', padding: '16px', borderRadius: '8px', marginBottom: '24px', textAlign: 'center' }}>
+              {errorMsg}
+            </div>
+          )}
+
+          {!result && (
+            <InputForm onSubmit={processSalesKit} isLoading={isLoading} />
+          )}
+
+          {result && (
+            <div className="animate-fade-in">
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
+                <button 
+                  className="btn-outline" 
+                  onClick={() => { setResult(null); setImageUrl(undefined); }}
+                >
+                  <Sparkles size={16} style={{ marginRight: '8px' }} /> Jana Kit Baru
+                </button>
+              </div>
+              <SalesDashboard data={result} imageUrl={imageUrl} />
+            </div>
+          )}
+          <Footer />
+        </div>
+      </>
     );
   }
 
 
-  return <LandingPage onGetAccess={() => setShowApp(true)} isLoggedIn={!!session} />;
+  return (
+    <>
+      <Analytics />
+      <LandingPage onGetAccess={() => setShowApp(true)} isLoggedIn={!!session} />
+    </>
+  );
 }
 
 export default App;
