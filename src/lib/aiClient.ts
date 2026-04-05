@@ -246,7 +246,14 @@ async function editImageIntoPoster(apiKey: string, posterPrompt: string, base64D
 async function generatePosterFromPrompt(apiKey: string, imagePrompt: string, model?: string): Promise<string> {
   const selectedModel = model || "google/nano-banana-2";
   
-  const body = { prompt: imagePrompt, model: selectedModel, n: 1, size: "1024x1024" };
+  // Kurangkan saiz ke 768x768 dan tambah option steps jika disokong untuk lajukan proses
+  const body = { 
+    prompt: imagePrompt, 
+    model: selectedModel, 
+    n: 1, 
+    size: "768x768", 
+    num_inference_steps: 20 
+  };
 
   let response: Response;
   if (isProduction()) {
