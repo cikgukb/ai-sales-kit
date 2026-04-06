@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Zap, Sparkles, Coins } from 'lucide-react';
-import { Analytics } from '@vercel/analytics/react';
 import InputForm from './components/InputForm';
 import SalesDashboard from './components/SalesDashboard';
 import LandingPage from './components/LandingPage';
@@ -152,7 +151,6 @@ function App() {
     
     return (
       <>
-        <Analytics />
         <SessionManager />
         <div className="container relative" style={{ minHeight: '100vh', paddingTop: '2rem' }}>
           <div className="hero-glow"></div>
@@ -253,7 +251,6 @@ function App() {
 
   return (
     <>
-      <Analytics />
       <LandingPage onGetAccess={() => setShowApp(true)} isLoggedIn={!!session} />
     </>
   );
