@@ -273,7 +273,7 @@ async function editImageIntoPoster(apiKey: string, posterPrompt: string, base64D
    MOD B: Jana poster dari prompt sahaja
    Menggunakan model pilihan (Default: NanoBanana 2)
    ────────────────────────────────────── */
-async function generatePosterFromPrompt(apiKey: string, imagePrompt: string, model?: string): Promise<string> {
+async function generatePosterFromPrompt(apiKey: string, imagePrompt: string, _model?: string): Promise<string> {
   // Use DALL-E 3 (ChatGPT's image generator) as requested
   const selectedModel = "openai/dall-e-3";
   
