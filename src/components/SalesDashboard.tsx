@@ -1,10 +1,14 @@
 import ReactMarkdown from 'react-markdown';
-import { Copy, Download, Image as ImageIcon, MessageCircle, PenTool, CheckCircle, Smartphone, Lightbulb, BarChart3, Zap, Loader2 } from 'lucide-react';
+import { Copy, Download, Image as ImageIcon, MessageCircle, PenTool, CheckCircle, Smartphone, Lightbulb, BarChart3, Zap, Info } from 'lucide-react';
 import type { GenerateResponse } from '../lib/aiClient';
+import { useSettings } from '../lib/SettingsContext';
+import { t } from '../lib/i18n';
 
 type SalesDashboardProps = {
   data: GenerateResponse;
   imageUrl?: string;
+  onGenerateImage?: () => void;
+  isGeneratingImage?: boolean;
 };
 
 /* ──────────────────────────────
@@ -140,7 +144,8 @@ const formatExtraFeaturesText = (parsed: { tikTokIdeas: string[]; headlineTest: 
 /* ══════════════════════════════
    KOMPONEN UTAMA
    ══════════════════════════════ */
-export default function SalesDashboard({ data, imageUrl }: SalesDashboardProps) {
+export default function SalesDashboard({ data, imageUrl, onGenerateImage, isGeneratingImage }: SalesDashboardProps) {
+  const { lang } = useSettings();
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -152,31 +157,11 @@ export default function SalesDashboard({ data, imageUrl }: SalesDashboardProps) 
 
   return (
     <div className="dashboard-grid">
-      {!imageUrl && (
-        <div style={{ 
-          gridColumn: '1 / -1', 
-          background: 'rgba(255, 100, 50, 0.1)', 
-          border: '1px solid var(--primary)', 
-          padding: '12px 24px', 
-          borderRadius: '12px', 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '12px',
-          marginBottom: '12px',
-          animation: 'pulse 2s infinite ease-in-out'
-        }}>
-          <Loader2 className="animate-spin" size={20} color="var(--primary)" />
-          <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--primary)' }}>
-            Status: Mohon bersabar, anggaran masa menunggu untuk gambar dijana sedang dikira.
-          </span>
-        </div>
-      )}
-      
       {/* ─── 1. Poster Iklan ─── */}
       <div className="glass-panel output-card">
-        <h3><ImageIcon size={20} /> Poster Iklan Siap Jual</h3>
+        <h3><ImageIcon size={20} /> {t(lang, 'posterTitle')}</h3>
         <p className="label" style={{ marginBottom: '16px' }}>
-          Poster iklan profesional hasil janaan AI. Boleh terus post ke Facebook, Instagram & TikTok!
+          {t(lang, 'posterDesc')}
         </p>
         
         {imageUrl ? (
@@ -190,7 +175,7 @@ export default function SalesDashboard({ data, imageUrl }: SalesDashboardProps) 
                 className="btn-primary" 
                 style={{ padding: '12px 20px', fontSize: '1rem', width: '100%', borderRadius: '10px' }}
               >
-                <Download size={18} /> Muat Turun Poster
+                <Download size={18} /> {t(lang, 'downloadImage')}
               </button>
             </div>
 
@@ -203,24 +188,45 @@ export default function SalesDashboard({ data, imageUrl }: SalesDashboardProps) 
                   className="btn-outline" 
                   style={{ padding: '4px 10px', fontSize: '0.75rem' }}
                 >
-                  <Copy size={12} /> Salin Prompt
+                  <Copy size={12} /> {t(lang, 'copyPrompt')}
                 </button>
               </div>
               <p style={{ fontSize: '0.85rem', opacity: 0.7, lineHeight: 1.5, margin: 0, fontStyle: 'italic' }}>
                 "{renderSafeString(data.imagePrompt)}"
               </p>
             </div>
+
+            {/* Disclaimer Section */}
+            <div style={{ marginTop: '16px', padding: '16px', background: 'rgba(255, 193, 7, 0.08)', borderRadius: '12px', border: '1px solid rgba(255, 193, 7, 0.25)', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+              <Info size={20} style={{ color: '#FFC107', flexShrink: 0, marginTop: '2px' }} />
+              <p style={{ fontSize: '0.85rem', color: 'var(--text)', opacity: 0.85, lineHeight: 1.5, margin: 0 }}>
+                {t(lang, 'disclaimerLLM' as any)}
+              </p>
+            </div>
           </div>
-        ) : (
-          <div style={{ padding: '40px', textAlign: 'center', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px dashed var(--border)' }}>
+        ) : isGeneratingImage ? (
+          <div style={{ padding: '40px', textAlign: 'center', background: 'var(--glass-bg)', borderRadius: '12px', border: '1px dashed var(--border)' }}>
             <LoaderFallback />
             <p className="label" style={{ marginTop: '12px', fontWeight: 600, color: 'var(--primary)' }}>
-              Mohon bersabar, anggaran masa menunggu untuk gambar dijana sedang dikira.
+              {t(lang, 'genWaitImage')}
             </p>
             <p className="label" style={{ marginTop: '4px', fontSize: '0.8rem', opacity: 0.8 }}>
-              AI kami sedang membina poster iklan premium untuk anda...
+              {t(lang, 'genWaitImageDesc')}
             </p>
-            <div style={{ marginTop: '20px', padding: '12px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', textAlign: 'left' }}>
+          </div>
+        ) : (
+          <div style={{ padding: '40px', textAlign: 'center', background: 'var(--glass-bg)', borderRadius: '12px', border: '1px dashed var(--border)' }}>
+            <p className="label" style={{ marginBottom: '16px', color: 'var(--text-muted)' }}>
+              {t(lang, 'btnGenImageDesc')}
+            </p>
+            <button 
+              onClick={onGenerateImage} 
+              className="btn-primary" 
+              style={{ padding: '12px 24px', fontSize: '1rem', borderRadius: '10px' }}
+            >
+              <ImageIcon size={20} /> {t(lang, 'btnGenImage')}
+            </button>
+            <div style={{ marginTop: '20px', padding: '12px', background: 'var(--border)', borderRadius: '8px', textAlign: 'left' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Original AI Prompt:</span>
               <p style={{ fontSize: '0.75rem', opacity: 0.6, margin: 0 }}>{renderSafeString(data.imagePrompt)}</p>
             </div>
@@ -231,13 +237,13 @@ export default function SalesDashboard({ data, imageUrl }: SalesDashboardProps) 
       {/* ─── 2. Copywriting Jualan ─── */}
       <div className="glass-panel output-card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h3 style={{ marginBottom: 0 }}><PenTool size={20} /> Copywriting Jualan</h3>
+          <h3 style={{ marginBottom: 0 }}><PenTool size={20} /> {t(lang, 'copywriting')}</h3>
           <div style={{ display: 'flex', gap: '6px' }}>
             <button onClick={() => handleCopy(renderSafeString(data.copywriting))} className="btn-outline" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
-              <Copy size={14} /> Salin
+              <Copy size={14} /> {t(lang, 'copy')}
             </button>
             <button onClick={() => downloadAsText(renderSafeString(data.copywriting), 'copywriting-jualan.txt')} className="btn-outline" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
-              <Download size={14} /> Muat Turun
+              <Download size={14} /> {t(lang, 'download')}
             </button>
           </div>
         </div>
@@ -249,13 +255,13 @@ export default function SalesDashboard({ data, imageUrl }: SalesDashboardProps) 
       {/* ─── 3. WhatsApp Script ─── */}
       <div className="glass-panel output-card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h3 style={{ marginBottom: 0 }}><MessageCircle size={20} /> Skrip WhatsApp & Follow-Up</h3>
+          <h3 style={{ marginBottom: 0 }}><MessageCircle size={20} /> {t(lang, 'whatsappScript')}</h3>
           <div style={{ display: 'flex', gap: '6px' }}>
             <button onClick={() => handleCopy(renderSafeString(data.whatsappScript))} className="btn-outline" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
-              <Copy size={14} /> Salin
+              <Copy size={14} /> {t(lang, 'copy')}
             </button>
             <button onClick={() => downloadAsText(renderSafeString(data.whatsappScript), 'skrip-whatsapp.txt')} className="btn-outline" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
-              <Download size={14} /> Muat Turun
+              <Download size={14} /> {t(lang, 'download')}
             </button>
           </div>
         </div>
@@ -267,13 +273,13 @@ export default function SalesDashboard({ data, imageUrl }: SalesDashboardProps) 
       {/* ─── 4. Action Plan ─── */}
       <div className="glass-panel output-card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h3 style={{ marginBottom: 0 }}><CheckCircle size={20} /> Pelan Tindakan 24 Jam</h3>
+          <h3 style={{ marginBottom: 0 }}><CheckCircle size={20} /> {t(lang, 'actionPlan')}</h3>
           <div style={{ display: 'flex', gap: '6px' }}>
             <button onClick={() => handleCopy(renderSafeString(data.actionPlan))} className="btn-outline" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
-              <Copy size={14} /> Salin
+              <Copy size={14} /> {t(lang, 'copy')}
             </button>
             <button onClick={() => downloadAsText(renderSafeString(data.actionPlan), 'pelan-tindakan-24jam.txt')} className="btn-outline" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
-              <Download size={14} /> Muat Turun
+              <Download size={14} /> {t(lang, 'download')}
             </button>
           </div>
         </div>
@@ -285,7 +291,7 @@ export default function SalesDashboard({ data, imageUrl }: SalesDashboardProps) 
       {/* ─── 5. Extra Features: Idea TikTok & Urgency (FORMAT CANTIK) ─── */}
       <div className="glass-panel output-card" style={{ gridColumn: '1 / -1' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h3 style={{ marginBottom: 0 }}><Smartphone size={20} /> Idea TikTok & Trigger Urgency</h3>
+          <h3 style={{ marginBottom: 0 }}><Smartphone size={20} /> {t(lang, 'extraFeatures')}</h3>
           <div style={{ display: 'flex', gap: '6px' }}>
             <button 
               onClick={() => {
@@ -294,7 +300,7 @@ export default function SalesDashboard({ data, imageUrl }: SalesDashboardProps) 
               }} 
               className="btn-outline" style={{ padding: '6px 12px', fontSize: '0.8rem' }}
             >
-              <Copy size={14} /> Salin
+              <Copy size={14} /> {t(lang, 'copy')}
             </button>
             <button 
               onClick={() => {
@@ -303,7 +309,7 @@ export default function SalesDashboard({ data, imageUrl }: SalesDashboardProps) 
               }} 
               className="btn-outline" style={{ padding: '6px 12px', fontSize: '0.8rem' }}
             >
-              <Download size={14} /> Muat Turun
+              <Download size={14} /> {t(lang, 'download')}
             </button>
           </div>
         </div>
@@ -445,7 +451,7 @@ export default function SalesDashboard({ data, imageUrl }: SalesDashboardProps) 
           className="btn-primary" 
           style={{ padding: '14px 40px', fontSize: '1rem', borderRadius: '12px' }}
         >
-          <Download size={18} /> Muat Turun Semua (Satu Fail)
+          <Download size={18} /> {t(lang, 'downloadAll')}
         </button>
       </div>
 

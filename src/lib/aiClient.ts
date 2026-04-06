@@ -2,14 +2,19 @@
 const getReplicateKey = () => import.meta.env.VITE_REPLICATE_API_TOKEN || localStorage.getItem('REPLICATE_API_TOKEN');
 const getImageRouterKey = () => import.meta.env.VITE_IMAGEROUTER_API_KEY || localStorage.getItem('IMAGEROUTER_API_KEY');
 
+import { supabase } from './supabase';
+
 // Detect if running on Vercel production or local dev
 const isProduction = () => !import.meta.env.DEV;
 
 export type SalesInput = {
   jenisProduk: string;
+  namaJenama?: string;
   targetCustomer: string;
   harga: string;
   masalahCustomer: string;
+  ciriKeunikan?: string;
+  tawaran?: string;
   ctaType?: string; // e.g. "Sila WhatsApp", "Masukkan nombor telefon", etc.
   ctaValue?: string; // The actual phone number or link
   userImage?: string; // base64 data URL from user upload (optional)
@@ -33,6 +38,14 @@ export type GenerateResponse = {
    ══════════════════════════════════════════════ */
 
 export const generateSalesKit = async (input: SalesInput): Promise<GenerateResponse> => {
+  if (supabase) {
+    const { data: usageData, error: usageError } = await supabase.rpc('process_usage', { p_type: 'copywriting' }) as { data: any, error: any };
+    if (usageError || (usageData && !usageData.success)) {
+      const errMsg = usageData?.message || usageError?.message || 'Baki kredit tidak mencukupi untuk menjana copywriting.';
+      throw new Error(errMsg.includes('kredit tidak mencukupi') || errMsg.includes('perlukan') ? `INSUFFICIENT_CREDITS: ${errMsg}` : errMsg);
+    }
+  }
+
   const replicateKey = getReplicateKey();
   if (!replicateKey) {
     throw new Error('Replicate API Key tidak ditemui. Sila masukkan di tetapan.');
@@ -46,10 +59,13 @@ export const generateSalesKit = async (input: SalesInput): Promise<GenerateRespo
   Jangan guna perkataan terlalu formal/skema. WAJIB fokus kepada SALES, convert, dan urgency.
 
   Maklumat Produk Usahawan:
+  - Nama Jenama: ${input.namaJenama || 'Tidak dinyatakan'}
   - Jenis Produk: ${input.jenisProduk}
   - Target Customer: ${input.targetCustomer}
   - Harga: ${input.harga}
   - Masalah Customer yg diselesaikan: ${input.masalahCustomer}
+  - Ciri-Ciri Keunikan / Kelebihan: ${input.ciriKeunikan || 'Tidak dinyatakan'}
+  - Tawaran / Offer: ${input.tawaran || 'Tidak dinyatakan (TOLONG berikan cadangan tawaran/offer yang biasa & berkesan digunakan oleh IKS di dalam copywriting nanti)'}
   - CTA Type: ${input.ctaType || 'WhatsApp Sekarang'}
   - CTA Detail: ${input.ctaValue || ''}
 
@@ -86,11 +102,17 @@ export const generateSalesKit = async (input: SalesInput): Promise<GenerateRespo
   - Di bahagian bawah poster.
   - MUST use this CTA type: "${input.ctaType || 'WhatsApp'}"
   - MUST include this detail: "${input.ctaValue || ''}"
+  - MESTI letakkan arahan melukis ikon yang bersesuaian di sebelah teks CTA dalam prompt gambar. Panduan Ikon:
+    * Jika CTA adalah 'WhatsApp' -> Arahkan lukisan 'a 3d green WhatsApp logo'
+    * Jika CTA adalah 'ClickBio' -> Arahkan lukisan 'an Instagram logo or Link icon'
+    * Jika CTA adalah 'Laman Web' -> Arahkan lukisan 'a glowing Globe or Website icon'
+    * Jika CTA adalah 'Hubungi' -> Arahkan lukisan 'a Phone call receiver icon'
+    * Jika CTA adalah 'Datang ke premis' -> Arahkan lukisan 'a Map pin or Location icon'
   - ${(!input.harga || input.harga === '0') ? 'DO NOT include any price in the poster.' : `Include price: "${input.harga}"`}
-  - Example: "${input.ctaType || 'Order Now'} [CTA_VALUE] ${(!input.harga || input.harga === '0') ? '' : `- Only ${input.harga}`}".
+  - Example: "[Relevant Icon] ${input.ctaType || 'Order Now'} [CTA_VALUE] ${(!input.harga || input.harga === '0') ? '' : `- Only ${input.harga}`}".
 
   FORMAT PROMPT YANG BETUL (CONTOH):
-  "Professional sales poster for [product]. Bold headline text '[HEADLINE]' at the top in large white bold typography. A friendly Malaysian [model_type] entrepreneur as the secondary element or hero product user. The [product] as the primary hero in the center, photorealistic, studio lighting, [color] gradient background. At the bottom, call-to-action text '[CTA TYPE] [CTA DETAIL]' with price '[PRICE]'. Clean modern poster layout, high contrast, commercial quality, social media ready, 1080x1080px format."
+  "Professional sales poster for [product]. Bold headline text '[HEADLINE]' at the top in large white bold typography. A friendly Malaysian [model_type] entrepreneur as the secondary element or hero product user. The [product] as the primary hero in the center, photorealistic, studio lighting, [color] gradient background. At the bottom, call-to-action text '[CTA TYPE] [CTA DETAIL]' with a [Relevant Icon] next to it, with price '[PRICE]'. Clean modern poster layout, high contrast, commercial quality, social media ready, 1080x1080px format."
 
   INGAT: Prompt "imagePrompt" MESTI menghasilkan POSTER LENGKAP dengan teks, dan WAJIB menggunakan wajah rakyat Malaysia!
   ==========================================
@@ -158,6 +180,14 @@ export const generateSalesKit = async (input: SalesInput): Promise<GenerateRespo
    ══════════════════════════════════════════════ */
 
 export const generateProductImage = async (imagePrompt: string, userImageBase64?: string, posterModel?: string): Promise<string> => {
+  if (supabase) {
+    const { data: usageData, error: usageError } = await supabase.rpc('process_usage', { p_type: 'image' }) as { data: any, error: any };
+    if (usageError || (usageData && !usageData.success)) {
+      const errMsg = usageData?.message || usageError?.message || 'Baki kredit tidak mencukupi untuk menjana gambar.';
+      throw new Error(errMsg.includes('kredit tidak mencukupi') || errMsg.includes('perlukan') ? `INSUFFICIENT_CREDITS: ${errMsg}` : errMsg);
+    }
+  }
+
   const imageRouterKey = getImageRouterKey();
   if (!imageRouterKey) {
     throw new Error('ImageRouter API Key tidak ditemui. Sila masukkan di .env.');
@@ -244,15 +274,15 @@ async function editImageIntoPoster(apiKey: string, posterPrompt: string, base64D
    Menggunakan model pilihan (Default: NanoBanana 2)
    ────────────────────────────────────── */
 async function generatePosterFromPrompt(apiKey: string, imagePrompt: string, model?: string): Promise<string> {
-  const selectedModel = model || "google/nano-banana-2";
+  // Use DALL-E 3 (ChatGPT's image generator) as requested
+  const selectedModel = "openai/dall-e-3";
   
-  // Kurangkan saiz ke 768x768 dan tambah option steps jika disokong untuk lajukan proses
-  const body = { 
+  // DALL-E 3 requires 1024x1024 minimum and does not support num_inference_steps
+  const body: any = { 
     prompt: imagePrompt, 
     model: selectedModel, 
-    n: 1, 
-    size: "768x768", 
-    num_inference_steps: 20 
+    n: 1,
+    size: "1024x1024"
   };
 
   let response: Response;
@@ -276,7 +306,12 @@ async function generatePosterFromPrompt(apiKey: string, imagePrompt: string, mod
   if (!response.ok) {
     const errorText = await response.text();
     console.error("ImageRouter Error:", errorText);
-    throw new Error("Gagal menjana poster dari ImageRouter");
+    let errMsg = "Ralat ImageRouter";
+    try {
+      const parsed = JSON.parse(errorText);
+      errMsg = parsed.error?.message || errorText;
+    } catch(e) {}
+    throw new Error(`Gagal menjana poster: ${errMsg}`);
   }
 
   const result = await response.json();
@@ -287,5 +322,6 @@ async function generatePosterFromPrompt(apiKey: string, imagePrompt: string, mod
     if (imgData.b64_json) return `data:image/png;base64,${imgData.b64_json}`;
   }
   
-  throw new Error("Gagal mendapat url poster dari ImageRouter");
+  console.error("Empty data returned:", result);
+  throw new Error(`Sistem AI menapis imej ini atau tiada hasil dikembalikan. Sila cuba 'Jana Kit Baru' (Tukar prompt teks anda). Respon: ${JSON.stringify(result).substring(0,100)}`);
 }

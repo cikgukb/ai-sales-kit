@@ -33,11 +33,21 @@ export default function Auth() {
         if (error) throw error;
         alert("Pendaftaran berjaya! Sila semak emel anda untuk pengesahan.");
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password
         });
         if (error) throw error;
+        
+        // Single session tracking
+        const sessionId = crypto.randomUUID();
+        localStorage.setItem('local_session_id', sessionId);
+        localStorage.setItem('login_time', Date.now().toString());
+        localStorage.setItem('last_active_time', Date.now().toString());
+
+        if (data.user) {
+          await supabase.from('profiles').update({ active_session_id: sessionId }).eq('id', data.user.id);
+        }
       }
     } catch (err: any) {
       setError(err.message || "Terdapat ralat semasa proses.");

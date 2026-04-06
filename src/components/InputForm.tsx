@@ -1,6 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { Sparkles, Loader2, Upload, X, ImageIcon } from 'lucide-react';
 import type { SalesInput } from '../lib/aiClient';
+import { useSettings } from '../lib/SettingsContext';
+import { t } from '../lib/i18n';
 
 type InputFormProps = {
   onSubmit: (data: SalesInput) => void;
@@ -8,11 +10,15 @@ type InputFormProps = {
 };
 
 export default function InputForm({ onSubmit, isLoading }: InputFormProps) {
+  const { lang } = useSettings();
   const [formData, setFormData] = useState<Omit<SalesInput, 'userImage'>>({
+    namaJenama: '',
     jenisProduk: '',
     targetCustomer: '',
     harga: '',
     masalahCustomer: '',
+    ciriKeunikan: '',
+    tawaran: '',
     ctaType: 'Sila WhatsApp',
     ctaValue: ''
   });
@@ -66,21 +72,38 @@ export default function InputForm({ onSubmit, isLoading }: InputFormProps) {
 
   return (
     <div className="glass-panel w-full max-w-2xl mx-auto">
-      <h2 style={{ marginBottom: '20px', fontSize: '1.5rem', fontWeight: 600 }}>Maklumat Bisnes Anda</h2>
+      <h2 style={{ marginBottom: '20px', fontSize: '1.5rem', fontWeight: 600 }}>{t(lang, 'formTitle')}</h2>
       <p style={{ color: 'var(--text-muted)', marginBottom: '24px' }}>
-        Isi 4 maklumat penting ini dan AI kami akan jana Kit Sales pertama anda.
+        {t(lang, 'formDesc')}
       </p>
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         
         <div>
-          <label className="label" htmlFor="jenisProduk">Jenis Produk / Servis</label>
+          <label className="label" htmlFor="namaJenama">{t(lang, 'brandName')}</label>
+          <input
+            className="input-field"
+            type="text"
+            id="namaJenama"
+            name="namaJenama"
+            placeholder={t(lang, 'brandNamePlaceholder')}
+            value={formData.namaJenama}
+            onChange={handleChange}
+            disabled={isLoading}
+          />
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '4px' }}>
+            {t(lang, 'brandNameDesc')}
+          </p>
+        </div>
+        
+        <div>
+          <label className="label" htmlFor="jenisProduk">{t(lang, 'productType')}</label>
           <input
             className="input-field"
             type="text"
             id="jenisProduk"
             name="jenisProduk"
-            placeholder="Contoh: Kopi Kurus Ais, Tudung Bawal Anti Kedut"
+            placeholder={t(lang, 'productTypePlaceholder')}
             value={formData.jenisProduk}
             onChange={handleChange}
             required
@@ -89,13 +112,13 @@ export default function InputForm({ onSubmit, isLoading }: InputFormProps) {
         </div>
 
         <div>
-          <label className="label" htmlFor="targetCustomer">Target Customer (Siapa nak beli?)</label>
+          <label className="label" htmlFor="targetCustomer">{t(lang, 'targetCustomer')}</label>
           <input
             className="input-field"
             type="text"
             id="targetCustomer"
             name="targetCustomer"
-            placeholder="Contoh: Wanita bekerjaya 30-40an yang busy"
+            placeholder={t(lang, 'targetCustomerPlaceholder')}
             value={formData.targetCustomer}
             onChange={handleChange}
             required
@@ -104,24 +127,75 @@ export default function InputForm({ onSubmit, isLoading }: InputFormProps) {
         </div>
 
         <div>
-          <label className="label" htmlFor="harga">Harga Produk / Services</label>
+          <label className="label" htmlFor="harga">{t(lang, 'price')}</label>
           <input
             className="input-field"
             type="text"
             id="harga"
             name="harga"
-            placeholder="Contoh: RM50 (Letak '0' jika tidak mahu tunjuk harga)"
+            placeholder={t(lang, 'pricePlaceholder')}
             value={formData.harga}
             onChange={handleChange}
             disabled={isLoading}
           />
           <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '4px' }}>
-            Tip: Kosongkan atau letak '0' jika anda tidak mahu harga dipaparkan pada poster.
+            {t(lang, 'priceTip')}
+          </p>
+        </div>
+
+
+
+        <div>
+          <label className="label" htmlFor="masalahCustomer">{t(lang, 'problem')}</label>
+          <textarea
+            className="input-field"
+            id="masalahCustomer"
+            name="masalahCustomer"
+            placeholder={t(lang, 'problemPlaceholder')}
+            rows={3}
+            value={formData.masalahCustomer}
+            onChange={handleChange}
+            required
+            disabled={isLoading}
+          ></textarea>
+        </div>
+
+        <div>
+          <label className="label" htmlFor="ciriKeunikan">{t(lang, 'uniqueFeature')}</label>
+          <textarea
+            className="input-field"
+            id="ciriKeunikan"
+            name="ciriKeunikan"
+            placeholder={t(lang, 'uniqueFeaturePlaceholder')}
+            rows={3}
+            value={formData.ciriKeunikan}
+            onChange={handleChange}
+            disabled={isLoading}
+          ></textarea>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '6px' }}>
+            {t(lang, 'uniqueFeatureTip')}
           </p>
         </div>
 
         <div>
-          <label className="label">Cara Call to Action (CTA)</label>
+          <label className="label" htmlFor="tawaran">{t(lang, 'offer')}</label>
+          <input
+            className="input-field"
+            type="text"
+            id="tawaran"
+            name="tawaran"
+            placeholder={t(lang, 'offerPlaceholder')}
+            value={formData.tawaran}
+            onChange={handleChange}
+            disabled={isLoading}
+          />
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '4px' }}>
+            {t(lang, 'offerTip')}
+          </p>
+        </div>
+
+        <div>
+          <label className="label">{t(lang, 'cta')}</label>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px', marginTop: '8px' }}>
             {['Sila WhatsApp', 'Klik Link Di Bio', 'Layari Laman Web', 'Hubungi Kami', 'Datang ke Premis'].map((type) => (
               <label key={type} style={{ 
@@ -152,12 +226,7 @@ export default function InputForm({ onSubmit, isLoading }: InputFormProps) {
             className="input-field"
             type="text"
             name="ctaValue"
-            placeholder={
-              formData.ctaType === 'Sila WhatsApp' ? 'Contoh: +60123456789' : 
-              formData.ctaType === 'Layari Laman Web' ? 'Contoh: www.bisnesanda.com' :
-              formData.ctaType === 'Datang ke Premis' ? 'Contoh: Taip [NAMA KEDAI] di Google Maps' :
-              'Masukkan detail akaun/nombor/link di sini'
-            }
+            placeholder={t(lang, 'ctaPlaceholder')}
             value={formData.ctaValue || ''}
             onChange={handleChange}
             style={{ marginTop: '12px' }}
@@ -165,31 +234,16 @@ export default function InputForm({ onSubmit, isLoading }: InputFormProps) {
           />
           {formData.ctaType === 'Datang ke Premis' && (
             <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '6px' }}>
-              Tip: Elakkan alamat terlalu panjang. Cukup sekadar nama tempat atau arahan carian Maps.
+              {t(lang, 'ctaTip')}
             </p>
           )}
-        </div>
-
-        <div>
-          <label className="label" htmlFor="masalahCustomer">Masalah Utama Customer</label>
-          <textarea
-            className="input-field"
-            id="masalahCustomer"
-            name="masalahCustomer"
-            placeholder="Contoh: Susah turun berat lepas bersalin, takde masa nak bersenam"
-            rows={3}
-            value={formData.masalahCustomer}
-            onChange={handleChange}
-            required
-            disabled={isLoading}
-          ></textarea>
         </div>
 
         {/* ─── Optional Image Upload ─── */}
         <div>
           <label className="label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <ImageIcon size={14} />
-            Gambar Produk Anda
+            {t(lang, 'imageUpload')}
             <span style={{ 
               background: 'rgba(155, 81, 224, 0.15)', 
               color: '#C084FC', 
@@ -198,11 +252,11 @@ export default function InputForm({ onSubmit, isLoading }: InputFormProps) {
               fontSize: '0.7rem', 
               fontWeight: 600 
             }}>
-              PILIHAN
+              {t(lang, 'imageUploadOption')}
             </span>
           </label>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginTop: '4px', marginBottom: '8px' }}>
-            Muat naik gambar produk anda dan AI akan ubahnya menjadi poster iklan profesional. Jika tiada, poster akan dijana automatik.
+            {t(lang, 'imageUploadDesc')}
           </p>
 
           {imagePreview ? (
@@ -309,14 +363,19 @@ export default function InputForm({ onSubmit, isLoading }: InputFormProps) {
           style={{ marginTop: '10px' }}
         >
           {isLoading ? (
-            <>
-              <Loader2 className="spinner" size={20} />
-              Menjana Kit Sales & Poster... Sila Tunggu
-            </>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Loader2 className="spinner" size={20} />
+                <span style={{ fontWeight: 'bold' }}>{t(lang, 'genWaitTitle')}</span>
+              </div>
+              <span style={{ fontSize: '0.85rem', fontWeight: 'normal', opacity: 0.9 }}>
+                {t(lang, 'genWaitDesc')}
+              </span>
+            </div>
           ) : (
             <>
               <Sparkles size={20} />
-              Jana Sales Kit & Poster Sekarang
+              {t(lang, 'genButton')}
             </>
           )}
         </button>
