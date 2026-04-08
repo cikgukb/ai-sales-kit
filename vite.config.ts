@@ -10,11 +10,6 @@ export default defineConfig({
         target: 'https://api.replicate.com',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/replicate-api/, '')
-      },
-      '/imagerouter-api': {
-        target: 'https://api.imagerouter.io',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/imagerouter-api/, '')
       }
     }
   }

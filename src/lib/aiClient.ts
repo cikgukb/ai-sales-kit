@@ -7,6 +7,48 @@ import { supabase } from './supabase';
 // Detect if running on Vercel production or local dev
 const isProduction = () => !import.meta.env.DEV;
 
+/* ──────────────────────────────────────
+   POLLING HELPER
+   When Replicate's Prefer: wait times out, the prediction
+   returns with status "processing" and no output.
+   This function polls until completion.
+   ────────────────────────────────────── */
+async function pollPrediction(prediction: any, apiKey: string, maxAttempts = 60): Promise<any> {
+  if (prediction.status === 'succeeded' && prediction.output) {
+    return prediction;
+  }
+  if (prediction.status === 'failed' || prediction.status === 'canceled') {
+    throw new Error(`Prediction ${prediction.status}: ${prediction.error || 'Unknown error'}`);
+  }
+
+  const pollUrl = prediction.urls?.get;
+  if (!pollUrl) {
+    throw new Error('Tiada URL polling dari Replicate. Sila cuba lagi.');
+  }
+
+  for (let i = 0; i < maxAttempts; i++) {
+    await new Promise(r => setTimeout(r, 2000)); // Wait 2s between polls
+
+    const pollResponse = await fetch(pollUrl, {
+      headers: { 'Authorization': `Bearer ${apiKey}` }
+    });
+
+    if (!pollResponse.ok) continue;
+
+    const updated = await pollResponse.json();
+    console.log(`Polling attempt ${i + 1}: status=${updated.status}`);
+
+    if (updated.status === 'succeeded' && updated.output) {
+      return updated;
+    }
+    if (updated.status === 'failed' || updated.status === 'canceled') {
+      throw new Error(`Prediction ${updated.status}: ${updated.error || 'Unknown error'}`);
+    }
+  }
+
+  throw new Error('Prediction timeout — AI mengambil masa terlalu lama. Sila cuba lagi.');
+}
+
 export type SalesInput = {
   jenisProduk: string;
   namaJenama?: string;
@@ -190,14 +232,20 @@ export const generateSalesKit = async (input: SalesInput): Promise<GenerateRespo
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error("Replicate Claude Error:", errorText);
-    throw new Error("Gagal memanggil Claude dari Replicate.");
+    console.error("Replicate Claude Error:", response.status, errorText);
+    throw new Error(`Gagal memanggil Claude (${response.status}): ${errorText.substring(0, 200)}`);
   }
 
-  const prediction = await response.json();
+  let prediction = await response.json();
   
+  // If Prefer: wait timed out, poll until completion
+  if (!prediction.output && prediction.status !== 'succeeded') {
+    const replicateKey = getReplicateKey();
+    prediction = await pollPrediction(prediction, replicateKey!);
+  }
+
   if (!prediction.output) {
-     throw new Error("Tiada output dari Claude Replicate.");
+     throw new Error(`Tiada output dari Claude. Status: ${prediction.status}, Error: ${prediction.error || 'none'}`);
   }
 
   const responseText = Array.isArray(prediction.output) ? prediction.output.join("") : prediction.output;
@@ -218,6 +266,14 @@ export const generateSalesKit = async (input: SalesInput): Promise<GenerateRespo
 };
 
 export const generateLandingPage = async (input: LandingPageInput): Promise<LandingPageResponse> => {
+  if (supabase) {
+    const { data: usageData, error: usageError } = await supabase.rpc('process_usage', { p_type: 'copywriting' }) as { data: any, error: any };
+    if (usageError || (usageData && !usageData.success)) {
+      const errMsg = usageData?.message || usageError?.message || 'Baki kredit tidak mencukupi untuk menjana Landing Page.';
+      throw new Error(errMsg.includes('kredit tidak mencukupi') || errMsg.includes('perlukan') ? `INSUFFICIENT_CREDITS: ${errMsg}` : errMsg);
+    }
+  }
+
   const replicateKey = getReplicateKey();
   if (!replicateKey) {
     throw new Error('Replicate API Key tidak ditemui. Sila masukkan di tetapan.');
@@ -297,14 +353,20 @@ export const generateLandingPage = async (input: LandingPageInput): Promise<Land
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error("Replicate Claude Error:", errorText);
-    throw new Error("Gagal memanggil Claude dari Replicate.");
+    console.error("Replicate Claude Error (Landing Page):", response.status, errorText);
+    throw new Error(`Gagal memanggil Claude (${response.status}): ${errorText.substring(0, 200)}`);
   }
 
-  const prediction = await response.json();
+  let prediction = await response.json();
   
+  // If Prefer: wait timed out, poll until completion
+  if (!prediction.output && prediction.status !== 'succeeded') {
+    const replicateKey = getReplicateKey();
+    prediction = await pollPrediction(prediction, replicateKey!);
+  }
+
   if (!prediction.output) {
-     throw new Error("Tiada output dari Claude Replicate.");
+     throw new Error(`Tiada output dari Claude. Status: ${prediction.status}, Error: ${prediction.error || 'none'}`);
   }
 
   const responseText = Array.isArray(prediction.output) ? prediction.output.join("") : prediction.output;
@@ -354,20 +416,21 @@ export const generateProductImage = async (imagePrompt: string, userImageBase64?
 
 /* ──────────────────────────────────────
    GENERATE POSTER VIA REPLICATE
-   MOD B: Jana poster (atau edit jika ada userImageBase64)
-   Menggunakan model pilihan (Default: nano-banana-2)
+   Menggunakan google/nano-banana-2
+   Schema: prompt, image_input[], aspect_ratio, resolution, output_format
    ────────────────────────────────────── */
 async function generatePosterViaReplicate(apiKey: string, imagePrompt: string, base64Image?: string): Promise<string> {
   const selectedModel = "google/nano-banana-2";
   
   const inputPayload: any = {
     prompt: imagePrompt,
-    num_inference_steps: 4, // Fast generation
+    aspect_ratio: "1:1",      // Square format for social media posters
+    output_format: "jpg",
   };
 
+  // nano-banana-2 accepts image_input as array of URIs
   if (base64Image) {
-    // If the Replicate model supports image-to-image or editing:
-    inputPayload.image = base64Image;
+    inputPayload.image_input = [base64Image];
   }
 
   const body = { 
@@ -395,23 +458,23 @@ async function generatePosterViaReplicate(apiKey: string, imagePrompt: string, b
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error("Replicate Image Error:", errorText);
+    console.error("Replicate Image Error:", response.status, errorText);
     let errMsg = "Ralat penjanaan Replicate";
     try {
       const parsed = JSON.parse(errorText);
       errMsg = parsed.error || parsed.detail || errorText;
     } catch(e) {}
-    throw new Error(`Gagal menjana poster: ${errMsg}`);
+    throw new Error(`Gagal menjana poster (${response.status}): ${errMsg}`);
   }
 
   const result = await response.json();
   
-  // Replicate returns output as an array for images, usually. Or string if it's 1.
+  // nano-banana-2 returns output as a single file URL string
   if (result.output) {
-    if (Array.isArray(result.output) && result.output.length > 0) {
-      return result.output[0];
-    } else if (typeof result.output === 'string') {
+    if (typeof result.output === 'string') {
       return result.output;
+    } else if (Array.isArray(result.output) && result.output.length > 0) {
+      return result.output[0];
     }
   }
   
@@ -421,6 +484,14 @@ async function generatePosterViaReplicate(apiKey: string, imagePrompt: string, b
 
 
 export const generateAdsStrategy = async (input: AdsStrategyInput): Promise<AdsStrategyResponse> => {
+  if (supabase) {
+    const { data: usageData, error: usageError } = await supabase.rpc('process_usage', { p_type: 'copywriting' }) as { data: any, error: any };
+    if (usageError || (usageData && !usageData.success)) {
+      const errMsg = usageData?.message || usageError?.message || 'Baki kredit tidak mencukupi untuk menjana strategi iklan.';
+      throw new Error(errMsg.includes('kredit tidak mencukupi') || errMsg.includes('perlukan') ? `INSUFFICIENT_CREDITS: ${errMsg}` : errMsg);
+    }
+  }
+
   const replicateKey = getReplicateKey();
   if (!replicateKey) {
     throw new Error('Replicate API Key tidak ditemui. Sila masukkan di tetapan.');
@@ -491,13 +562,20 @@ export const generateAdsStrategy = async (input: AdsStrategyInput): Promise<AdsS
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error("Replicate Error:", errorText);
-    throw new Error("Gagal mendapat maklumat strategi dari AI.");
+    console.error("Replicate Error (Ads Strategy):", response.status, errorText);
+    throw new Error(`Gagal memanggil Claude (${response.status}): ${errorText.substring(0, 200)}`);
   }
 
-  const prediction = await response.json();
+  let prediction = await response.json();
+
+  // If Prefer: wait timed out, poll until completion
+  if (!prediction.output && prediction.status !== 'succeeded') {
+    const replicateKey = getReplicateKey();
+    prediction = await pollPrediction(prediction, replicateKey!);
+  }
+
   if (!prediction.output) {
-    throw new Error("Tiada output yang dijana.");
+    throw new Error(`Tiada output dari Claude. Status: ${prediction.status}, Error: ${prediction.error || 'none'}`);
   }
 
   const responseText = Array.isArray(prediction.output) ? prediction.output.join("") : prediction.output;
