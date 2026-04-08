@@ -10,10 +10,8 @@ export default async function handler(req, res) {
 
   try {
     const response = await fetch(
-      'https://api.replicate.com/v1/models/anthropic/claude-3.7-sonnet/predictions',
+      'https://api.replicate.com/v1/models/anthropic/claude-4.5-sonnet/predictions',
       {
-        method: 'POST',
-        headers: {
           'Authorization': `Bearer ${REPLICATE_KEY}`,
           'Content-Type': 'application/json',
           'Prefer': 'wait'

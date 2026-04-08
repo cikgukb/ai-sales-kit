@@ -57,6 +57,23 @@ export type AdsStrategyResponse = {
   };
 };
 
+export type LandingPageInput = {
+  productDescription: string;
+  targetAudience: string;
+  priceRange: string;
+  offerDetails: string;
+};
+
+export type LandingPageResponse = {
+  sectionA: { headline: string; hook: string; };
+  sectionB: { problem: string; pain: string; solutionContrast: string; };
+  sectionC: { proofAndTrust: string; };
+  sectionD: { mechanism: string; };
+  sectionE: { mainProduct: string; bonuses: string[]; specialIncentive: string; valueStacking: string; };
+  sectionF: { cta: string; urgencyLine: string; scarcityAngle: string; riskReversal: string; };
+  bonusSection: { objectionHandling: string; };
+};
+
 /* ══════════════════════════════════════════════
    POSTER FRAMEWORK PROMPT TEMPLATE
    Based on poster_framework.html:
@@ -160,7 +177,7 @@ export const generateSalesKit = async (input: SalesInput): Promise<GenerateRespo
     });
   } else {
     // Local dev: use Vite proxy
-    response = await fetch("/replicate-api/v1/models/anthropic/claude-3.7-sonnet/predictions", {
+    response = await fetch("/replicate-api/v1/models/anthropic/claude-4.5-sonnet/predictions", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${replicateKey}`,
@@ -200,6 +217,112 @@ export const generateSalesKit = async (input: SalesInput): Promise<GenerateRespo
   }
 };
 
+export const generateLandingPage = async (input: LandingPageInput): Promise<LandingPageResponse> => {
+  const replicateKey = getReplicateKey();
+  if (!replicateKey) {
+    throw new Error('Replicate API Key tidak ditemui. Sila masukkan di tetapan.');
+  }
+
+  const prompt = `
+  Anda adalah pakar Copywriting Landing Page bertaraf dunia di Malaysia.
+  Tugasan anda adalah membina modul: "Landing Page Builder (Conversion Framework + Offer Injection)".
+  
+  INFO BISNES:
+  - Produk / Servis: ${input.productDescription}
+  - Target Audience: ${input.targetAudience}
+  - Harga: ${input.priceRange}
+  - Offer (Tawaran Khusus): ${input.offerDetails}
+
+  PENTING:
+  - Anda WAJIB mengintegrasikan tawaran (offer) ini bagi meningkatkan urgency dan menguatkan CTA.
+  - Sila guna Bahasa Melayu santai yang persuasif tapi jelas. Jangan terlalu overhype.
+  
+  HASILKAN OUTPUT REKA BENTUK DALAM FORMAT JSON SEPERTI BERIKUT SAHAJA:
+  {
+    "sectionA": {
+      "headline": "(Penting: Inject OFFER di sini jika sesuai. Contoh: Belajar Ads + Dapat Template Siap Guna Terhad Minggu Ini)",
+      "hook": "(Ayat pertama yang menangkap emosi audience)"
+    },
+    "sectionB": {
+      "problem": "(Nyatakan masalah utama)",
+      "pain": "(Besarkan kesakitan tu)",
+      "solutionContrast": "(Bandingkan kesakitan dengan offer penyelesaian yang disediakan)"
+    },
+    "sectionC": {
+      "proofAndTrust": "(Skrip: '...dengan tawaran ini, pengguna mencapai hasil...')"
+    },
+    "sectionD": {
+      "mechanism": "(Penerangan bagaimana produk berkesan)"
+    },
+    "sectionE": {
+      "mainProduct": "(Rewrite offer kepada HIGH VALUE version)",
+      "bonuses": ["(Bonus 1 jika ada)", "(Bonus 2 jika ada)"],
+      "specialIncentive": "(Insentif tambahan)",
+      "valueStacking": "(Nilai terkumpul dan Perceived value untuk jadikan ia sangat berbaloi)"
+    },
+    "sectionF": {
+      "cta": "(CTA beserta URGENCY: Daftar Sekarang Sebelum Slot Penuh)",
+      "urgencyLine": "(Cth: Tawaran ini hanya untuk 50 peserta pertama)",
+      "scarcityAngle": "(Cth: Bonus akan ditutup bila slot penuh)",
+      "riskReversal": "(Guarantee atau Low-risk mitigation)"
+    },
+    "bonusSection": {
+      "objectionHandling": "(Pecahkan keraguan prospect berhubung offer. Soalan & Jawapan)"
+    }
+  }
+
+  Pastikan respons HANYA mengandungi objek JSON tulen tanpa blok markdown tambahan.
+  `;
+
+  const body = { input: { prompt: prompt, max_tokens: 4000 } };
+
+  let response: Response;
+  if (isProduction()) {
+    response = await fetch("/api/replicate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+  } else {
+    response = await fetch("/replicate-api/v1/models/anthropic/claude-4.5-sonnet/predictions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${replicateKey}`,
+        "Content-Type": "application/json",
+        "Prefer": "wait"
+      },
+      body: JSON.stringify(body)
+    });
+  }
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("Replicate Claude Error:", errorText);
+    throw new Error("Gagal memanggil Claude dari Replicate.");
+  }
+
+  const prediction = await response.json();
+  
+  if (!prediction.output) {
+     throw new Error("Tiada output dari Claude Replicate.");
+  }
+
+  const responseText = Array.isArray(prediction.output) ? prediction.output.join("") : prediction.output;
+  let cleanedText = responseText.trim();
+  if (cleanedText.startsWith('\`\`\`json')) {
+    cleanedText = cleanedText.replace(/^\`\`\`json/g, '').replace(/\`\`\`$/g, '').trim();
+  } else if (cleanedText.startsWith('\`\`\`')) {
+    cleanedText = cleanedText.replace(/^\`\`\`/g, '').replace(/\`\`\`$/g, '').trim();
+  }
+
+  try {
+    return JSON.parse(cleanedText) as LandingPageResponse;
+  } catch (e) {
+    console.error("Gagal parse JSON dari Claude", cleanedText);
+    throw new Error("Ralat memproses jawapan JSON dari Claude AI.");
+  }
+};
+
 /* ══════════════════════════════════════════════
    GENERATE POSTER IMAGE
    Dua mod:
@@ -216,20 +339,13 @@ export const generateProductImage = async (imagePrompt: string, userImageBase64?
     }
   }
 
-  const imageRouterKey = getImageRouterKey();
-  if (!imageRouterKey) {
-    throw new Error('ImageRouter API Key tidak ditemui. Sila masukkan di .env.');
+  const replicateKey = getReplicateKey();
+  if (!replicateKey) {
+    throw new Error('Replicate API Key tidak ditemui. Sila masukkan di .env.');
   }
 
   try {
-    // ─── MOD A: Pengguna ada upload gambar → Edit jadi poster ───
-    if (userImageBase64) {
-      return await editImageIntoPoster(imageRouterKey, imagePrompt, userImageBase64);
-    }
-
-    // ─── MOD B: Tiada gambar → Jana poster dari prompt ───
-    return await generatePosterFromPrompt(imageRouterKey, imagePrompt, posterModel);
-
+    return await generatePosterViaReplicate(replicateKey, imagePrompt, userImageBase64);
   } catch (err: any) {
     console.error("Image gen err", err);
     throw new Error(err.message || "Ralat penjanaan gambar");
@@ -237,79 +353,25 @@ export const generateProductImage = async (imagePrompt: string, userImageBase64?
 };
 
 /* ──────────────────────────────────────
-   MOD A: Edit gambar pengguna jadi poster
-   Menggunakan flux-kontext-pro via /images/edits
+   GENERATE POSTER VIA REPLICATE
+   MOD B: Jana poster (atau edit jika ada userImageBase64)
+   Menggunakan model pilihan (Default: nano-banana-2)
    ────────────────────────────────────── */
-async function editImageIntoPoster(apiKey: string, posterPrompt: string, base64DataUrl: string): Promise<string> {
-  // Extract binary from base64 data URL
-  const base64Data = base64DataUrl.split(',')[1];
-  const byteChars = atob(base64Data);
-  const byteNumbers = new Array(byteChars.length);
-  for (let i = 0; i < byteChars.length; i++) {
-    byteNumbers[i] = byteChars.charCodeAt(i);
-  }
-  const byteArray = new Uint8Array(byteNumbers);
+async function generatePosterViaReplicate(apiKey: string, imagePrompt: string, base64Image?: string): Promise<string> {
+  const selectedModel = "google/nano-banana-2";
   
-  // Determine mime type
-  const mimeMatch = base64DataUrl.match(/^data:(image\/\w+);/);
-  const mimeType = mimeMatch ? mimeMatch[1] : 'image/png';
-  const ext = mimeType.split('/')[1] || 'png';
-  
-  const imageBlob = new Blob([byteArray], { type: mimeType });
-
-  const editPrompt = `Transform this product photo into a professional sales poster. ${posterPrompt}. Keep the original product clearly visible as the hero element. Add bold headline text at the top, professional background styling, and call-to-action text at the bottom. Make it look like a premium commercial advertisement poster ready for social media.`;
-
-  const formData = new FormData();
-  formData.append('image', imageBlob, `product.${ext}`);
-  formData.append('prompt', editPrompt);
-  formData.append('model', 'black-forest-labs/flux-kontext-pro');
-  formData.append('response_format', 'url');
-
-  let response: Response;
-  if (isProduction()) {
-    response = await fetch("/api/imageedit", {
-      method: "POST",
-      body: formData
-    });
-  } else {
-    response = await fetch("/imagerouter-api/v1/openai/images/edits", {
-      method: "POST",
-      headers: { "Authorization": `Bearer ${apiKey}` },
-      body: formData
-    });
-  }
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error("ImageRouter Edit Error:", errorText);
-    // Fallback: If edit fails, try generating from prompt instead
-    console.warn("Edit gagal, cuba generate dari prompt...");
-    return await generatePosterFromPrompt(apiKey, posterPrompt);
-  }
-
-  const result = await response.json();
-  if (result.data && result.data.length > 0) {
-    const imgData = result.data[0];
-    if (imgData.url) return imgData.url;
-    if (imgData.b64_json) return `data:image/png;base64,${imgData.b64_json}`;
-  }
-  
-  throw new Error("Gagal mendapat hasil edit gambar dari ImageRouter");
-}
-
-/* ──────────────────────────────────────
-   MOD B: Jana poster dari prompt sahaja
-   Menggunakan model pilihan (Default: NanoBanana 2)
-   ────────────────────────────────────── */
-async function generatePosterFromPrompt(apiKey: string, imagePrompt: string, _model?: string): Promise<string> {
-  // Use DALL-E 3 (ChatGPT's image generator) as requested
-  const selectedModel = _model || "google/nano-banana-2";
-  
-  const body: any = { 
-    prompt: imagePrompt, 
-    model: selectedModel, 
+  const inputPayload: any = {
+    prompt: imagePrompt,
     num_inference_steps: 4, // Fast generation
-    response_format: "url"
+  };
+
+  if (base64Image) {
+    // If the Replicate model supports image-to-image or editing:
+    inputPayload.image = base64Image;
+  }
+
+  const body = { 
+    input: inputPayload
   };
 
   let response: Response;
@@ -320,11 +382,12 @@ async function generatePosterFromPrompt(apiKey: string, imagePrompt: string, _mo
       body: JSON.stringify(body)
     });
   } else {
-    response = await fetch("/imagerouter-api/v1/openai/images/generations", {
+    response = await fetch(\`/replicate-api/v1/models/\${selectedModel}/predictions\`, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json"
+        "Authorization": \`Bearer \${apiKey}\`,
+        "Content-Type": "application/json",
+        "Prefer": "wait"
       },
       body: JSON.stringify(body)
     });
@@ -332,26 +395,31 @@ async function generatePosterFromPrompt(apiKey: string, imagePrompt: string, _mo
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error("ImageRouter Error:", errorText);
-    let errMsg = "Ralat ImageRouter";
+    console.error("Replicate Image Error:", errorText);
+    let errMsg = "Ralat penjanaan Replicate";
     try {
       const parsed = JSON.parse(errorText);
-      errMsg = parsed.error?.message || errorText;
+      errMsg = parsed.error || parsed.detail || errorText;
     } catch(e) {}
-    throw new Error(`Gagal menjana poster: ${errMsg}`);
+    throw new Error(\`Gagal menjana poster: \${errMsg}\`);
   }
 
   const result = await response.json();
   
-  if (result.data && result.data.length > 0) {
-    const imgData = result.data[0];
-    if (imgData.url) return imgData.url;
-    if (imgData.b64_json) return `data:image/png;base64,${imgData.b64_json}`;
+  // Replicate returns output as an array for images, usually. Or string if it's 1.
+  if (result.output) {
+    if (Array.isArray(result.output) && result.output.length > 0) {
+      return result.output[0];
+    } else if (typeof result.output === 'string') {
+      return result.output;
+    }
   }
   
   console.error("Empty data returned:", result);
-  throw new Error(`Sistem AI menapis imej ini atau tiada hasil dikembalikan. Sila cuba 'Jana Kit Baru' (Tukar prompt teks anda). Respon: ${JSON.stringify(result).substring(0,100)}`);
+  throw new Error(\`Sistem AI menapis imej ini atau tiada hasil dikembalikan. Respon: \${JSON.stringify(result).substring(0,100)}\`);
 }
+    // Removed existing editImageIntoPoster and generatePosterFromPrompt blocks
+
 
 export const generateAdsStrategy = async (input: AdsStrategyInput): Promise<AdsStrategyResponse> => {
   const replicateKey = getReplicateKey();
@@ -411,7 +479,7 @@ export const generateAdsStrategy = async (input: AdsStrategyInput): Promise<AdsS
       body: JSON.stringify(body)
     });
   } else {
-    response = await fetch("/replicate-api/v1/models/anthropic/claude-3.7-sonnet/predictions", {
+    response = await fetch("/replicate-api/v1/models/anthropic/claude-4.5-sonnet/predictions", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${replicateKey}`,

@@ -3,19 +3,21 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const IMAGEROUTER_KEY = process.env.VITE_IMAGEROUTER_API_KEY;
-  if (!IMAGEROUTER_KEY) {
-    return res.status(500).json({ error: 'ImageRouter API key not configured' });
+  const REPLICATE_KEY = process.env.VITE_REPLICATE_API_TOKEN;
+  if (!REPLICATE_KEY) {
+    return res.status(500).json({ error: 'Replicate API key not configured' });
   }
 
   try {
+    const selectedModel = "google/nano-banana-2";
     const response = await fetch(
-      'https://api.imagerouter.io/v1/openai/images/generations',
+      `https://api.replicate.com/v1/models/${selectedModel}/predictions`,
       {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${IMAGEROUTER_KEY}`,
-          'Content-Type': 'application/json'
+          'Authorization': `Bearer ${REPLICATE_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'wait'
         },
         body: JSON.stringify(req.body)
       }
@@ -29,7 +31,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json(data);
   } catch (error) {
-    console.error('ImageRouter proxy error:', error);
+    console.error('Replicate image proxy error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 }
