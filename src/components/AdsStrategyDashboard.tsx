@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { AdsStrategyResponse } from '../lib/aiClient';
-import { Lightbulb, Target, ArrowRightCircle, Calendar, ChevronDown, ChevronUp, Download } from 'lucide-react';
+import { Lightbulb, Target, ArrowRightCircle, Calendar, ChevronDown, ChevronUp, Download, Copy } from 'lucide-react';
 // @ts-ignore
 import html2pdf from 'html2pdf.js';
 
@@ -126,9 +126,9 @@ export default function AdsStrategyDashboard({ data }: AdsStrategyDashboardProps
       const opt = {
         margin: 10,
         filename: 'Ads_Creative_And_Strategy_Report.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
+        image: { type: 'jpeg' as const, quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        jsPDF: { unit: 'mm' as const, format: 'a4' as const, orientation: 'portrait' as const }
       };
       
       await html2pdf().from(element).set(opt).save();
@@ -139,16 +139,77 @@ export default function AdsStrategyDashboard({ data }: AdsStrategyDashboardProps
     }, 300);
   };
 
+  const handleCopyText = () => {
+    const textToCopy = `ADS CREATIVE & STRATEGY REPORT
+
+--- SECTION A: ADS CREATIVE ---
+
+1. Ad Type 1: Pain-Based
+Hook: ${data.sectionA.painBased.hook}
+Body: ${data.sectionA.painBased.body}
+CTA: ${data.sectionA.painBased.cta}
+Visual: ${data.sectionA.painBased.visualSuggestion}
+
+2. Ad Type 2: Curiosity / AI Angle
+Hook: ${data.sectionA.curiosityBased.hook}
+Body: ${data.sectionA.curiosityBased.body}
+CTA: ${data.sectionA.curiosityBased.cta}
+Visual: ${data.sectionA.curiosityBased.visualSuggestion}
+
+3. Ad Type 3: Proof-Based
+Hook: ${data.sectionA.proofBased.hook}
+Body: ${data.sectionA.proofBased.body}
+CTA: ${data.sectionA.proofBased.cta}
+Visual: ${data.sectionA.proofBased.visualSuggestion}
+
+--- SECTION B: ADS STRATEGY (EXECUTION) ---
+
+FASA 1: ${data.sectionB.phase1.phase}
+Audience: ${data.sectionB.phase1.audience}
+Advantage+: ${data.sectionB.phase1.advantagePlus}
+Budget: ${data.sectionB.phase1.budget}
+KPI: ${data.sectionB.phase1.kpi?.join(', ')}
+
+FASA 2: ${data.sectionB.phase2.phase}
+Trigger: ${data.sectionB.phase2.trigger}
+Actions:
+${data.sectionB.phase2.actions?.map(a => '- ' + a).join('\n ')}
+
+FASA 3: ${data.sectionB.phase3.phase}
+Requirement: ${data.sectionB.phase3.requirement}
+Actions:
+${data.sectionB.phase3.actions?.map(a => '- ' + a).join('\n ')}
+
+--- ACTION TIMELINE ---
+Day 1-3: ${data.timeline.day1to3?.join(' | ') || ''}
+Day 4-7: ${data.timeline.day4to7?.join(' | ') || ''}
+Week 2: ${data.timeline.week2?.join(' | ') || ''}
+
+--- IF-THEN SCENARIOS ---
+${data.sectionC.scenarios?.map((s, i) => `Senario ${i+1}: ${s.situation}\nMakna: ${s.meaning}\nTindakan:\n${s.action.map(a => '- ' + a).join('\n')}`).join('\n\n') || ''}
+`;
+
+    navigator.clipboard.writeText(textToCopy);
+    alert('✅ Salinan Teks Berjaya! Boleh terus tampal (paste) ke Word / browser lain.');
+  };
+
   return (
     <div id="ads-strategy-wrapper" className="dashboard-grid" style={{ gridTemplateColumns: '1fr' }}>
       
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginBottom: '8px' }}>
+        <button 
+          onClick={handleCopyText} 
+          className="btn-outline" 
+          style={{ padding: '10px 20px', fontSize: '0.9rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}
+        >
+          <Copy size={18} /> Salin Teks Format
+        </button>
         <button 
           onClick={handleDownloadPdf} 
-          className="btn-outline" 
-          style={{ padding: '10px 20px', fontSize: '0.9rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--primary)', borderColor: 'var(--primary)' }}
+          className="btn-primary" 
+          style={{ padding: '10px 20px', fontSize: '0.9rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}
         >
-          <Download size={18} /> {isExporting ? 'Menjana PDF...' : 'Muat Turun Report Lenuh (PDF)'}
+          <Download size={18} /> {isExporting ? 'Menjana PDF...' : 'Muat Turun Report Penuh (PDF)'}
         </button>
       </div>
 

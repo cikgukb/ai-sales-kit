@@ -11,10 +11,12 @@ import SessionManager from './components/SessionManager';
 import HistoryModal from './components/HistoryModal';
 import AdsStrategyInputForm from './components/AdsStrategyInput';
 import AdsStrategyDashboard from './components/AdsStrategyDashboard';
+import LandingPageInputForm from './components/LandingPageInputForm';
+import LandingPageDashboard from './components/LandingPageDashboard';
 import { supabase } from './lib/supabase';
 import type { Session } from '@supabase/supabase-js';
-import { generateSalesKit, generateProductImage, generateAdsStrategy } from './lib/aiClient';
-import type { SalesInput, GenerateResponse, AdsStrategyInput, AdsStrategyResponse } from './lib/aiClient';
+import { generateSalesKit, generateProductImage, generateAdsStrategy, generateLandingPage } from './lib/aiClient';
+import type { SalesInput, GenerateResponse, AdsStrategyInput, AdsStrategyResponse, LandingPageInput, LandingPageResponse } from './lib/aiClient';
 import { saveToDatabase } from './lib/supabase';
 import type { SalesKitData } from './lib/supabase';
 import { incrementUsage } from './lib/counter';
@@ -35,9 +37,11 @@ function App() {
   const [credits, setCredits] = useState<number | null>(null);
   const [showTopUpPopup, setShowTopUpPopup] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [activeTab, setActiveTab] = useState<'sales-kit' | 'ads-strategy'>('sales-kit');
+  const [activeTab, setActiveTab] = useState<'sales-kit' | 'ads-strategy' | 'landing-page'>('sales-kit');
   const [adsResult, setAdsResult] = useState<AdsStrategyResponse | null>(null);
   const [isAdsLoading, setIsAdsLoading] = useState(false);
+  const [landingPageResult, setLandingPageResult] = useState<LandingPageResponse | null>(null);
+  const [isLandingPageLoading, setIsLandingPageLoading] = useState(false);
 
   const [salesFormData, setSalesFormData] = useState<Omit<SalesInput, 'userImage'>>({
     namaJenama: '',
@@ -58,6 +62,13 @@ function App() {
     objective: 'Sales'
   });
 
+  const [landingPageFormData, setLandingPageFormData] = useState<LandingPageInput>({
+    productDescription: '',
+    targetAudience: '',
+    priceRange: '',
+    offerDetails: ''
+  });
+
   const handleSalesDataChange = (d: Omit<SalesInput, 'userImage'>) => {
     setSalesFormData(d);
     setAdsFormData(prev => ({
@@ -65,6 +76,13 @@ function App() {
       productDescription: d.jenisProduk,
       targetAudience: d.targetCustomer,
       priceRange: d.harga
+    }));
+    setLandingPageFormData(prev => ({
+      ...prev,
+      productDescription: d.jenisProduk,
+      targetAudience: d.targetCustomer,
+      priceRange: d.harga,
+      offerDetails: d.tawaran || ''
     }));
   };
 
@@ -76,13 +94,36 @@ function App() {
       targetCustomer: d.targetAudience,
       harga: d.priceRange
     }));
+    setLandingPageFormData(prev => ({
+      ...prev,
+      productDescription: d.productDescription,
+      targetAudience: d.targetAudience,
+      priceRange: d.priceRange
+    }));
+  };
+
+  const handleLandingPageDataChange = (d: LandingPageInput) => {
+    setLandingPageFormData(d);
+    setSalesFormData(prev => ({
+      ...prev,
+      jenisProduk: d.productDescription,
+      targetCustomer: d.targetAudience,
+      harga: d.priceRange,
+      tawaran: d.offerDetails
+    }));
+    setAdsFormData(prev => ({
+      ...prev,
+      productDescription: d.productDescription,
+      targetAudience: d.targetAudience,
+      priceRange: d.priceRange
+    }));
   };
 
   const fetchCredits = async (userId: string) => {
     try {
       const { data } = await supabase!.from('profiles').select('credits').eq('id', userId).single();
       if (data) setCredits(data.credits);
-    } catch(e) {}
+    } catch { /* ignore */ }
   };
 
   const resetAllStates = () => {
@@ -106,6 +147,13 @@ function App() {
       targetAudience: '',
       priceRange: '',
       objective: 'Sales'
+    });
+    setLandingPageResult(null);
+    setLandingPageFormData({
+      productDescription: '',
+      targetAudience: '',
+      priceRange: '',
+      offerDetails: ''
     });
   };
 
@@ -165,6 +213,27 @@ function App() {
       }
     } finally {
       setIsAdsLoading(false);
+    }
+  };
+
+  const processLandingPage = async (data: LandingPageInput) => {
+    setIsLandingPageLoading(true);
+    setErrorMsg('');
+    setLandingPageResult(null);
+    try {
+      // NOTE: Make sure usage increments properly in DB if applicable
+      const resp = await generateLandingPage(data);
+      setLandingPageResult(resp);
+      if (session?.user) fetchCredits(session.user.id);
+    } catch (e: any) {
+      if (e.message && e.message.startsWith('INSUFFICIENT_CREDITS:')) {
+        setShowTopUpPopup(true);
+        setErrorMsg(e.message.replace('INSUFFICIENT_CREDITS:', '').trim());
+      } else {
+        setErrorMsg(e.message || 'Terdapat ralat semasa menjana Landing Page.');
+      }
+    } finally {
+      setIsLandingPageLoading(false);
     }
   };
 
@@ -313,7 +382,7 @@ function App() {
             </div>
           )}
 
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '24px', flexWrap: 'wrap' }}>
             <button 
               className={activeTab === 'sales-kit' ? 'btn-primary' : 'btn-outline'} 
               onClick={() => setActiveTab('sales-kit')}
@@ -327,6 +396,13 @@ function App() {
               style={{ padding: '8px 24px', fontSize: '1rem', borderRadius: '99px', boxShadow: 'none', transform: 'none' }}
             >
               Ads Creative & Strategy
+            </button>
+            <button 
+              className={activeTab === 'landing-page' ? 'btn-primary' : 'btn-outline'} 
+              onClick={() => setActiveTab('landing-page')}
+              style={{ padding: '8px 24px', fontSize: '1rem', borderRadius: '99px', boxShadow: 'none', transform: 'none' }}
+            >
+              Landing Page Builder
             </button>
           </div>
 
@@ -384,6 +460,33 @@ function App() {
                     </button>
                   </div>
                   <AdsStrategyDashboard data={adsResult} />
+                </div>
+              )}
+            </>
+          )}
+
+          {activeTab === 'landing-page' && (
+            <>
+              {!landingPageResult && (
+                <LandingPageInputForm 
+                  data={landingPageFormData} 
+                  onChange={handleLandingPageDataChange} 
+                  onSubmit={processLandingPage} 
+                  isLoading={isLandingPageLoading} 
+                />
+              )}
+              
+              {landingPageResult && (
+                <div className="animate-fade-in">
+                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
+                    <button 
+                      className="btn-outline" 
+                      onClick={() => setLandingPageResult(null)}
+                    >
+                      <Sparkles size={16} style={{ marginRight: '8px' }} /> Jana Copywriting Baru
+                    </button>
+                  </div>
+                  <LandingPageDashboard data={landingPageResult} />
                 </div>
               )}
             </>
