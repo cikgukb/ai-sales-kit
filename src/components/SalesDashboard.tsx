@@ -468,9 +468,35 @@ export default function SalesDashboard({ data, imageUrl, onGenerateImage, isGene
             downloadAsText(fullContent, 'ai-sales-kit-penuh.txt');
           }} 
           className="btn-primary" 
-          style={{ padding: '14px 40px', fontSize: '1rem', borderRadius: '12px' }}
+          style={{ padding: '14px 40px', fontSize: '1rem', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', margin: '0 auto 12px' }}
         >
           <Download size={18} /> {t(lang, 'downloadAll')}
+        </button>
+
+        <button 
+          onClick={async () => {
+            const element = document.querySelector('.dashboard-grid') as HTMLElement;
+            if (!element) return;
+            // hide buttons during export
+            const buttons = element.querySelectorAll('button');
+            buttons.forEach(b => b.style.display = 'none');
+            
+            const html2pdf = (await import('html2pdf.js')).default;
+            await html2pdf().set({
+              margin: 10,
+              filename: 'ai-sales-kit-penuh.pdf',
+              image: { type: 'jpeg', quality: 0.98 },
+              html2canvas: { scale: 2, useCORS: true },
+              jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            }).from(element).save();
+
+            // restore buttons
+            buttons.forEach(b => b.style.display = '');
+          }} 
+          className="btn-outline" 
+          style={{ padding: '14px 40px', fontSize: '1rem', borderRadius: '12px', borderColor: 'var(--primary)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', margin: '0 auto' }}
+        >
+          <Download size={18} /> Muat Turun Report (PDF)
         </button>
       </div>
 

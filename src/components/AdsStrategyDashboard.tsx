@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
 import type { AdsStrategyResponse } from '../lib/aiClient';
-import { Lightbulb, Target, ArrowRightCircle, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
+import { Lightbulb, Target, ArrowRightCircle, Calendar, ChevronDown, ChevronUp, Download } from 'lucide-react';
+// @ts-ignore
+import html2pdf from 'html2pdf.js';
 
 type AdsStrategyDashboardProps = {
   data: AdsStrategyResponse;
 };
 
 // Accordion Item Component
-function AccordionItem({ title, icon, children, defaultOpen = false }: { title: string; icon: React.ReactNode; children: React.ReactNode; defaultOpen?: boolean }) {
+function AccordionItem({ title, icon, children, defaultOpen = false, forceOpen = false }: { title: string; icon: React.ReactNode; children: React.ReactNode; defaultOpen?: boolean; forceOpen?: boolean }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  const actuallyOpen = isOpen || forceOpen;
 
   return (
     <div className="glass-panel output-card" style={{ padding: 0, overflow: 'hidden', marginBottom: '16px' }}>
@@ -31,10 +35,10 @@ function AccordionItem({ title, icon, children, defaultOpen = false }: { title: 
         <span style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '1.25rem', fontWeight: 600, color: 'var(--primary)' }}>
           {icon} {title}
         </span>
-        {isOpen ? <ChevronUp size={20} color="var(--text-muted)" /> : <ChevronDown size={20} color="var(--text-muted)" />}
+        {actuallyOpen ? <ChevronUp size={20} color="var(--text-muted)" /> : <ChevronDown size={20} color="var(--text-muted)" />}
       </button>
       
-      {isOpen && (
+      {actuallyOpen && (
         <div style={{ padding: '20px', borderTop: '1px dashed var(--border)' }} className="animate-fade-in">
           {children}
         </div>
@@ -44,6 +48,7 @@ function AccordionItem({ title, icon, children, defaultOpen = false }: { title: 
 }
 
 export default function AdsStrategyDashboard({ data }: AdsStrategyDashboardProps) {
+  const [isExporting, setIsExporting] = useState(false);
 
   // Helper renderer
   const renderAdCopy = (title: string, copy: any, iconColor: string) => {
@@ -105,25 +110,64 @@ export default function AdsStrategyDashboard({ data }: AdsStrategyDashboardProps
     );
   }
 
-  return (
-    <div className="dashboard-grid" style={{ gridTemplateColumns: '1fr' }}>
+  const handleDownloadPdf = async () => {
+    setIsExporting(true);
+    // Give React time to render all accordions (since state update is async)
+    setTimeout(async () => {
+      const element = document.getElementById('ads-strategy-wrapper');
+      if (!element) {
+        setIsExporting(false);
+        return;
+      }
+      const buttons = element.querySelectorAll('button');
+      // Hide buttons gracefully
+      buttons.forEach(b => b.style.opacity = '0');
+
+      const opt = {
+        margin: 10,
+        filename: 'Ads_Creative_And_Strategy_Report.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
       
+      await html2pdf().from(element).set(opt).save();
+
+      // Restore
+      buttons.forEach(b => b.style.opacity = '1');
+      setIsExporting(false);
+    }, 300);
+  };
+
+  return (
+    <div id="ads-strategy-wrapper" className="dashboard-grid" style={{ gridTemplateColumns: '1fr' }}>
+      
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px' }}>
+        <button 
+          onClick={handleDownloadPdf} 
+          className="btn-outline" 
+          style={{ padding: '10px 20px', fontSize: '0.9rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--primary)', borderColor: 'var(--primary)' }}
+        >
+          <Download size={18} /> {isExporting ? 'Menjana PDF...' : 'Muat Turun Report Lenuh (PDF)'}
+        </button>
+      </div>
+
       {/* SECTION A: Ads Creative */}
-      <AccordionItem title="SECTION A: Ads Creative" icon={<Lightbulb />}>
+      <AccordionItem forceOpen={isExporting} title="SECTION A: Ads Creative" icon={<Lightbulb />}>
         {renderAdCopy('Ad Type 1: Pain-Based', data.sectionA.painBased, '#E11D48')}
         {renderAdCopy('Ad Type 2: Curiosity / AI Angle', data.sectionA.curiosityBased, '#9B51E0')}
         {renderAdCopy('Ad Type 3: Proof-Based', data.sectionA.proofBased, '#10B981')}
       </AccordionItem>
 
       {/* SECTION B: Ads Strategy (Execution Plan) */}
-      <AccordionItem title="SECTION B: Ads Strategy (Execution Plan)" icon={<Target />}>
+      <AccordionItem forceOpen={isExporting} title="SECTION B: Ads Strategy (Execution Plan)" icon={<Target />}>
         {renderPhase(data.sectionB.phase1, '#00F0FF')}
         {renderPhase(data.sectionB.phase2, '#FFC107')}
         {renderPhase(data.sectionB.phase3, '#10B981')}
       </AccordionItem>
 
       {/* SECTION C: What To Do Next (Scenario Engine + Timeline) */}
-      <AccordionItem title="SECTION C: What To Do Next (Scenarios & Timeline)" icon={<ArrowRightCircle />}>
+      <AccordionItem forceOpen={isExporting} title="SECTION C: What To Do Next (Scenarios & Timeline)" icon={<ArrowRightCircle />}>
         <div style={{ marginBottom: '24px' }}>
           <h3 style={{ fontSize: '1.1rem', marginBottom: '16px', color: 'var(--text-main)', borderBottom: '1px dashed var(--border)', paddingBottom: '8px' }}>Action Timeline</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
