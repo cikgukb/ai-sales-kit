@@ -85,6 +85,30 @@ function App() {
     } catch(e) {}
   };
 
+  const resetAllStates = () => {
+    setResult(null);
+    setAdsResult(null);
+    setImageUrl(undefined);
+    setCurrentSalesData(null);
+    setSalesFormData({
+      namaJenama: '',
+      jenisProduk: '',
+      targetCustomer: '',
+      harga: '',
+      masalahCustomer: '',
+      ciriKeunikan: '',
+      tawaran: '',
+      ctaType: 'Sila WhatsApp',
+      ctaValue: ''
+    });
+    setAdsFormData({
+      productDescription: '',
+      targetAudience: '',
+      priceRange: '',
+      objective: 'Sales'
+    });
+  };
+
   useEffect(() => {
     supabase?.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -93,7 +117,11 @@ function App() {
 
     const { data: { subscription } } = supabase?.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (session?.user) fetchCredits(session.user.id);
+      if (session?.user) {
+        fetchCredits(session.user.id);
+      } else {
+        resetAllStates();
+      }
     }) || { data: { subscription: null } };
 
     return () => subscription?.unsubscribe();
