@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Zap, Sparkles, Coins } from 'lucide-react';
+import { Zap, Sparkles, Coins, History } from 'lucide-react';
 import { Analytics } from '@vercel/analytics/react';
 import InputForm from './components/InputForm';
 import SalesDashboard from './components/SalesDashboard';
@@ -8,11 +8,15 @@ import Auth from './components/Auth';
 import Footer from './components/Footer';
 import SettingsMenu from './components/SettingsMenu';
 import SessionManager from './components/SessionManager';
+import HistoryModal from './components/HistoryModal';
+import AdsStrategyInputForm from './components/AdsStrategyInput';
+import AdsStrategyDashboard from './components/AdsStrategyDashboard';
 import { supabase } from './lib/supabase';
 import type { Session } from '@supabase/supabase-js';
-import { generateSalesKit, generateProductImage } from './lib/aiClient';
-import type { SalesInput, GenerateResponse } from './lib/aiClient';
+import { generateSalesKit, generateProductImage, generateAdsStrategy } from './lib/aiClient';
+import type { SalesInput, GenerateResponse, AdsStrategyInput, AdsStrategyResponse } from './lib/aiClient';
 import { saveToDatabase } from './lib/supabase';
+import type { SalesKitData } from './lib/supabase';
 import { incrementUsage } from './lib/counter';
 import { useSettings } from './lib/SettingsContext';
 import { t } from './lib/i18n';
@@ -30,6 +34,49 @@ function App() {
   const [currentSalesData, setCurrentSalesData] = useState<SalesInput | null>(null);
   const [credits, setCredits] = useState<number | null>(null);
   const [showTopUpPopup, setShowTopUpPopup] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [activeTab, setActiveTab] = useState<'sales-kit' | 'ads-strategy'>('sales-kit');
+  const [adsResult, setAdsResult] = useState<AdsStrategyResponse | null>(null);
+  const [isAdsLoading, setIsAdsLoading] = useState(false);
+
+  const [salesFormData, setSalesFormData] = useState<Omit<SalesInput, 'userImage'>>({
+    namaJenama: '',
+    jenisProduk: '',
+    targetCustomer: '',
+    harga: '',
+    masalahCustomer: '',
+    ciriKeunikan: '',
+    tawaran: '',
+    ctaType: 'Sila WhatsApp',
+    ctaValue: ''
+  });
+
+  const [adsFormData, setAdsFormData] = useState<AdsStrategyInput>({
+    productDescription: '',
+    targetAudience: '',
+    priceRange: '',
+    objective: 'Sales'
+  });
+
+  const handleSalesDataChange = (d: Omit<SalesInput, 'userImage'>) => {
+    setSalesFormData(d);
+    setAdsFormData(prev => ({
+      ...prev,
+      productDescription: d.jenisProduk,
+      targetAudience: d.targetCustomer,
+      priceRange: d.harga
+    }));
+  };
+
+  const handleAdsDataChange = (d: AdsStrategyInput) => {
+    setAdsFormData(d);
+    setSalesFormData(prev => ({
+      ...prev,
+      jenisProduk: d.productDescription,
+      targetCustomer: d.targetAudience,
+      harga: d.priceRange
+    }));
+  };
 
   const fetchCredits = async (userId: string) => {
     try {
@@ -51,6 +98,47 @@ function App() {
 
     return () => subscription?.unsubscribe();
   }, []);
+
+  const handleSelectHistory = (savedData: SalesKitData) => {
+    setResult({
+      copywriting: savedData.copywriting || '',
+      whatsappScript: savedData.whatsapp_script || '',
+      actionPlan: savedData.action_plan || '',
+      imagePrompt: 'Prompt dari sejarah terdahulu (tidak disimpan di sistem).',
+      extraFeatures: ''
+    });
+    setImageUrl(savedData.gambar_url);
+    setCurrentSalesData({
+      jenisProduk: savedData.jenis_produk,
+      targetCustomer: savedData.target_customer,
+      harga: savedData.harga,
+      masalahCustomer: savedData.masalah_customer
+    });
+    setActiveTab('sales-kit');
+    // Ensure we are in the app view
+    setShowApp(true);
+  };
+
+  const processAdsStrategy = async (data: AdsStrategyInput) => {
+    setIsAdsLoading(true);
+    setErrorMsg('');
+    setAdsResult(null);
+    try {
+      // NOTE: Make sure usage increments properly in DB if applicable
+      const resp = await generateAdsStrategy(data);
+      setAdsResult(resp);
+      if (session?.user) fetchCredits(session.user.id);
+    } catch (e: any) {
+      if (e.message && e.message.startsWith('INSUFFICIENT_CREDITS:')) {
+        setShowTopUpPopup(true);
+        setErrorMsg(e.message.replace('INSUFFICIENT_CREDITS:', '').trim());
+      } else {
+        setErrorMsg(e.message || 'Terdapat ralat semasa menjana strategi iklan.');
+      }
+    } finally {
+      setIsAdsLoading(false);
+    }
+  };
 
   const processSalesKit = async (data: SalesInput) => {
     setIsLoading(true);
@@ -168,6 +256,14 @@ function App() {
                   {credits} Kredit
                 </div>
               )}
+              <button 
+                className="btn-outline" 
+                onClick={() => setShowHistory(true)} 
+                style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', color: 'var(--primary)', borderColor: 'rgba(0, 240, 255, 0.3)', display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <History size={16} />
+                Sejarah
+              </button>
               <SettingsMenu />
               <button className="btn-outline" onClick={() => supabase?.auth.signOut()} style={{ padding: '0.5rem 1rem', fontSize: '0.875rem', borderColor: 'var(--accent)', color: '#fca5a5' }}>
                 {t(lang, 'logout')}
@@ -189,28 +285,82 @@ function App() {
             </div>
           )}
 
-          {!result && (
-            <InputForm onSubmit={processSalesKit} isLoading={isLoading} />
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginBottom: '24px' }}>
+            <button 
+              className={activeTab === 'sales-kit' ? 'btn-primary' : 'btn-outline'} 
+              onClick={() => setActiveTab('sales-kit')}
+              style={{ padding: '8px 24px', fontSize: '1rem', borderRadius: '99px', boxShadow: 'none', transform: 'none' }}
+            >
+              AI Sales Kit
+            </button>
+            <button 
+              className={activeTab === 'ads-strategy' ? 'btn-primary' : 'btn-outline'} 
+              onClick={() => setActiveTab('ads-strategy')}
+              style={{ padding: '8px 24px', fontSize: '1rem', borderRadius: '99px', boxShadow: 'none', transform: 'none' }}
+            >
+              Ads Creative & Strategy
+            </button>
+          </div>
+
+          {activeTab === 'sales-kit' && (
+            <>
+              {!result && (
+                <InputForm 
+                  data={salesFormData} 
+                  onChange={handleSalesDataChange} 
+                  onSubmit={processSalesKit} 
+                  isLoading={isLoading} 
+                />
+              )}
+    
+              {result && (
+                <div className="animate-fade-in">
+                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
+                    <button 
+                      className="btn-outline" 
+                      onClick={() => { setResult(null); setImageUrl(undefined); setCurrentSalesData(null); }}
+                    >
+                      <Sparkles size={16} style={{ marginRight: '8px' }} /> Jana Kit Baru
+                    </button>
+                  </div>
+                  <SalesDashboard 
+                    data={result} 
+                    imageUrl={imageUrl} 
+                    onGenerateImage={processImageGeneration}
+                    isGeneratingImage={isGeneratingImage}
+                  />
+                </div>
+              )}
+            </>
           )}
 
-          {result && (
-            <div className="animate-fade-in">
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
-                <button 
-                  className="btn-outline" 
-                  onClick={() => { setResult(null); setImageUrl(undefined); setCurrentSalesData(null); }}
-                >
-                  <Sparkles size={16} style={{ marginRight: '8px' }} /> Jana Kit Baru
-                </button>
-              </div>
-              <SalesDashboard 
-                data={result} 
-                imageUrl={imageUrl} 
-                onGenerateImage={processImageGeneration}
-                isGeneratingImage={isGeneratingImage}
-              />
-            </div>
+          {activeTab === 'ads-strategy' && (
+            <>
+              {!adsResult && (
+                <AdsStrategyInputForm 
+                  data={adsFormData} 
+                  onChange={handleAdsDataChange} 
+                  onSubmit={processAdsStrategy} 
+                  isLoading={isAdsLoading} 
+                />
+              )}
+              
+              {adsResult && (
+                <div className="animate-fade-in">
+                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
+                    <button 
+                      className="btn-outline" 
+                      onClick={() => setAdsResult(null)}
+                    >
+                      <Sparkles size={16} style={{ marginRight: '8px' }} /> Jana Strategi Ads Baru
+                    </button>
+                  </div>
+                  <AdsStrategyDashboard data={adsResult} />
+                </div>
+              )}
+            </>
           )}
+          
           <Footer />
 
           {/* Top-up Credits Modal */}
@@ -245,6 +395,12 @@ function App() {
                </div>
             </div>
           )}
+
+          <HistoryModal 
+            isOpen={showHistory} 
+            onClose={() => setShowHistory(false)} 
+            onSelectHistory={handleSelectHistory} 
+          />
         </div>
       </>
     );

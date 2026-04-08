@@ -29,6 +29,34 @@ export type GenerateResponse = {
   imagePrompt: string;
 };
 
+export type AdsStrategyInput = {
+  productDescription: string;
+  targetAudience: string;
+  priceRange: string;
+  objective: string;
+};
+
+export type AdsStrategyResponse = {
+  sectionA: {
+    painBased: { hook: string; body: string; cta: string; visualSuggestion: string; awareness: string; };
+    curiosityBased: { hook: string; body: string; cta: string; visualSuggestion: string; awareness: string; };
+    proofBased: { hook: string; body: string; cta: string; visualSuggestion: string; awareness: string; };
+  };
+  sectionB: {
+    phase1: { phase: string; audience: string; advantagePlus: string; budget: string; kpi: string[]; };
+    phase2: { phase: string; trigger: string; actions: string[]; };
+    phase3: { phase: string; requirement: string; actions: string[]; };
+  };
+  sectionC: {
+    scenarios: Array<{ situation: string; meaning: string; action: string[]; }>;
+  };
+  timeline: {
+    day1to3: string[];
+    day4to7: string[];
+    week2: string[];
+  };
+};
+
 /* ══════════════════════════════════════════════
    POSTER FRAMEWORK PROMPT TEMPLATE
    Based on poster_framework.html:
@@ -275,14 +303,13 @@ async function editImageIntoPoster(apiKey: string, posterPrompt: string, base64D
    ────────────────────────────────────── */
 async function generatePosterFromPrompt(apiKey: string, imagePrompt: string, _model?: string): Promise<string> {
   // Use DALL-E 3 (ChatGPT's image generator) as requested
-  const selectedModel = "openai/dall-e-3";
+  const selectedModel = _model || "google/nano-banana-2";
   
-  // DALL-E 3 requires 1024x1024 minimum and does not support num_inference_steps
   const body: any = { 
     prompt: imagePrompt, 
     model: selectedModel, 
-    n: 1,
-    size: "1024x1024"
+    num_inference_steps: 4, // Fast generation
+    response_format: "url"
   };
 
   let response: Response;
@@ -325,3 +352,99 @@ async function generatePosterFromPrompt(apiKey: string, imagePrompt: string, _mo
   console.error("Empty data returned:", result);
   throw new Error(`Sistem AI menapis imej ini atau tiada hasil dikembalikan. Sila cuba 'Jana Kit Baru' (Tukar prompt teks anda). Respon: ${JSON.stringify(result).substring(0,100)}`);
 }
+
+export const generateAdsStrategy = async (input: AdsStrategyInput): Promise<AdsStrategyResponse> => {
+  const replicateKey = getReplicateKey();
+  if (!replicateKey) {
+    throw new Error('Replicate API Key tidak ditemui. Sila masukkan di tetapan.');
+  }
+
+  const prompt = `
+  Anda adalah pakar strategi digital Ads (Facebook/TikTok/IG) berkelas dunia di Malaysia.
+  Tugasan anda adalah membina modul: "Ads Creative & Strategy" khas untuk produk/servis berikut:
+
+  - Produk / Servis: ${input.productDescription}
+  - Target Audience: ${input.targetAudience}
+  - Harga Barangan: ${input.priceRange}
+  - Objektif Kempen: ${input.objective}
+  
+  Sila guna Bahasa Melayu yang ringkas, jelas (actionable) dan tanpa jargon teknikal berlebihan.
+
+  HASILKAN OUTPUT REKA BENTUK DALAM FORMAT JSON SEPERTI BERIKUT SAHAJA:
+  {
+    "sectionA": {
+      "painBased": { "hook": "...", "body": "...", "cta": "...", "visualSuggestion": "...", "awareness": "Cold/Warm" },
+      "curiosityBased": { "hook": "...", "body": "...", "cta": "...", "visualSuggestion": "...", "awareness": "Cold/Warm" },
+      "proofBased": { "hook": "...", "body": "...", "cta": "...", "visualSuggestion": "...", "awareness": "Cold/Warm" }
+    },
+    "sectionB": {
+      "phase1": { "phase": "PHASE 1: EXPLORE", "audience": "Broad", "advantagePlus": "ON", "budget": "RMxx - RMyy sehari", "kpi": ["...", "..."] },
+      "phase2": { "phase": "PHASE 2: CONTROL", "trigger": "Performance drop", "actions": ["...", "..."] },
+      "phase3": { "phase": "PHASE 3: SCALE", "requirement": "Minimum 1,000 data", "actions": ["...", "..."] }
+    },
+    "sectionC": {
+      "scenarios": [
+        { "situation": "Low CTR (<1.5%)", "meaning": "Creative is weak", "action": ["...", "..."] },
+        { "situation": "High CTR tapi tiada jualan", "meaning": "Landing page problem", "action": ["...", "..."] },
+        { "situation": "Ada jualan tapi kos tinggi (High CPA)", "meaning": "Funnel not optimized", "action": ["...", "..."] },
+        { "situation": "Ads sangat padu (High ROAS)", "meaning": "Winning pattern found", "action": ["...", "..."] }
+      ]
+    },
+    "timeline": {
+      "day1to3": ["Launch ads", "Jangan buat sebarang pertukaran (Do not make changes)"],
+      "day4to7": ["Analyze CTR", "Tutup (kill) ads yang low-performing"],
+      "week2": ["Scale winning ads", "Introduce new creatives"]
+    }
+  }
+
+  PENTING:
+  - Kembalikan HANYA JSON block tanpa text tambahan, tanpa \`\`\`json (atau saya akan parse fail secara langsung).
+  `;
+
+  const body = { input: { prompt: prompt, max_tokens: 3000 } };
+
+  let response: Response;
+  if (isProduction()) {
+    response = await fetch("/api/replicate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+  } else {
+    response = await fetch("/replicate-api/v1/models/anthropic/claude-3.7-sonnet/predictions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${replicateKey}`,
+        "Content-Type": "application/json",
+        "Prefer": "wait"
+      },
+      body: JSON.stringify(body)
+    });
+  }
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("Replicate Error:", errorText);
+    throw new Error("Gagal mendapat maklumat strategi dari AI.");
+  }
+
+  const prediction = await response.json();
+  if (!prediction.output) {
+    throw new Error("Tiada output yang dijana.");
+  }
+
+  const responseText = Array.isArray(prediction.output) ? prediction.output.join("") : prediction.output;
+  let cleanedText = responseText.trim();
+  if (cleanedText.startsWith('\`\`\`json')) {
+    cleanedText = cleanedText.replace(/^\`\`\`json/g, '').replace(/\`\`\`$/g, '').trim();
+  } else if (cleanedText.startsWith('\`\`\`')) {
+    cleanedText = cleanedText.replace(/^\`\`\`/g, '').replace(/\`\`\`$/g, '').trim();
+  }
+
+  try {
+    return JSON.parse(cleanedText) as AdsStrategyResponse;
+  } catch (e) {
+    console.error("Parse Error:", cleanedText);
+    throw new Error("Gagal menyusun strategi Ads.");
+  }
+};

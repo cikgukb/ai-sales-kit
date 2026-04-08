@@ -215,20 +215,39 @@ export default function SalesDashboard({ data, imageUrl, onGenerateImage, isGene
             </p>
           </div>
         ) : (
-          <div style={{ padding: '40px', textAlign: 'center', background: 'var(--glass-bg)', borderRadius: '12px', border: '1px dashed var(--border)' }}>
-            <p className="label" style={{ marginBottom: '16px', color: 'var(--text-muted)' }}>
-              {t(lang, 'btnGenImageDesc')}
-            </p>
-            <button 
-              onClick={onGenerateImage} 
-              className="btn-primary" 
-              style={{ padding: '12px 24px', fontSize: '1rem', borderRadius: '10px' }}
-            >
-              <ImageIcon size={20} /> {t(lang, 'btnGenImage')}
-            </button>
-            <div style={{ marginTop: '20px', padding: '12px', background: 'var(--border)', borderRadius: '8px', textAlign: 'left' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Original AI Prompt:</span>
-              <p style={{ fontSize: '0.75rem', opacity: 0.6, margin: 0 }}>{renderSafeString(data.imagePrompt)}</p>
+          <div style={{ padding: '24px', background: 'var(--glass-bg)', borderRadius: '12px', border: '1px dashed var(--border)' }}>
+            
+            {/* Prompt Copy Section - Muka depan */}
+            <div style={{ marginBottom: '24px', padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--primary)' }}>Prom (Prompt) Janaan Poster</span>
+                <button 
+                  onClick={() => handleCopy(renderSafeString(data.imagePrompt))} 
+                  className="btn-outline" 
+                  style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                >
+                  <Copy size={14} /> {t(lang, 'copyPrompt')}
+                </button>
+              </div>
+              <p style={{ fontSize: '0.9rem', opacity: 0.85, lineHeight: 1.6, margin: 0, fontStyle: 'italic', background: 'var(--bg-secondary)', padding: '12px', borderRadius: '8px' }}>
+                "{renderSafeString(data.imagePrompt)}"
+              </p>
+              <div style={{ marginTop: '12px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                💡 <b>Tip:</b> Anda boleh salin prom di atas dan gunakannya di dalam <i>image generator</i> lain jika hasil dari sistem kami tidak menepati citarasa anda.
+              </div>
+            </div>
+
+            <div style={{ textAlign: 'center', borderTop: '1px dashed var(--border)', paddingTop: '24px' }}>
+              <p className="label" style={{ marginBottom: '16px', color: 'var(--text-muted)' }}>
+                Atau jana poster secara automatik di sini:
+              </p>
+              <button 
+                onClick={onGenerateImage} 
+                className="btn-outline" 
+                style={{ padding: '12px 24px', fontSize: '1rem', borderRadius: '10px', borderColor: 'var(--primary)', color: 'var(--primary)' }}
+              >
+                <ImageIcon size={20} /> {t(lang, 'btnGenImage')}
+              </button>
             </div>
           </div>
         )}

@@ -5,32 +5,23 @@ import { useSettings } from '../lib/SettingsContext';
 import { t } from '../lib/i18n';
 
 type InputFormProps = {
+  data: Omit<SalesInput, 'userImage'>;
+  onChange: (data: Omit<SalesInput, 'userImage'>) => void;
   onSubmit: (data: SalesInput) => void;
   isLoading: boolean;
 };
 
-export default function InputForm({ onSubmit, isLoading }: InputFormProps) {
+export default function InputForm({ data, onChange, onSubmit, isLoading }: InputFormProps) {
   const { lang } = useSettings();
-  const [formData, setFormData] = useState<Omit<SalesInput, 'userImage'>>({
-    namaJenama: '',
-    jenisProduk: '',
-    targetCustomer: '',
-    harga: '',
-    masalahCustomer: '',
-    ciriKeunikan: '',
-    tawaran: '',
-    ctaType: 'Sila WhatsApp',
-    ctaValue: ''
-  });
   const [userImage, setUserImage] = useState<string | undefined>(undefined);
   const [imagePreview, setImagePreview] = useState<string | undefined>(undefined);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData(prev => ({
-      ...prev,
+    onChange({
+      ...data,
       [e.target.name]: e.target.value
-    }));
+    });
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -66,8 +57,8 @@ export default function InputForm({ onSubmit, isLoading }: InputFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.jenisProduk) return;
-    onSubmit({ ...formData, userImage });
+    if (!data.jenisProduk) return;
+    onSubmit({ ...data, userImage });
   };
 
   return (
@@ -87,7 +78,7 @@ export default function InputForm({ onSubmit, isLoading }: InputFormProps) {
             id="namaJenama"
             name="namaJenama"
             placeholder={t(lang, 'brandNamePlaceholder')}
-            value={formData.namaJenama}
+            value={data.namaJenama}
             onChange={handleChange}
             disabled={isLoading}
           />
@@ -104,7 +95,7 @@ export default function InputForm({ onSubmit, isLoading }: InputFormProps) {
             id="jenisProduk"
             name="jenisProduk"
             placeholder={t(lang, 'productTypePlaceholder')}
-            value={formData.jenisProduk}
+            value={data.jenisProduk}
             onChange={handleChange}
             required
             disabled={isLoading}
@@ -119,7 +110,7 @@ export default function InputForm({ onSubmit, isLoading }: InputFormProps) {
             id="targetCustomer"
             name="targetCustomer"
             placeholder={t(lang, 'targetCustomerPlaceholder')}
-            value={formData.targetCustomer}
+            value={data.targetCustomer}
             onChange={handleChange}
             required
             disabled={isLoading}
@@ -134,7 +125,7 @@ export default function InputForm({ onSubmit, isLoading }: InputFormProps) {
             id="harga"
             name="harga"
             placeholder={t(lang, 'pricePlaceholder')}
-            value={formData.harga}
+            value={data.harga}
             onChange={handleChange}
             disabled={isLoading}
           />
@@ -153,7 +144,7 @@ export default function InputForm({ onSubmit, isLoading }: InputFormProps) {
             name="masalahCustomer"
             placeholder={t(lang, 'problemPlaceholder')}
             rows={3}
-            value={formData.masalahCustomer}
+            value={data.masalahCustomer}
             onChange={handleChange}
             required
             disabled={isLoading}
@@ -168,7 +159,7 @@ export default function InputForm({ onSubmit, isLoading }: InputFormProps) {
             name="ciriKeunikan"
             placeholder={t(lang, 'uniqueFeaturePlaceholder')}
             rows={3}
-            value={formData.ciriKeunikan}
+            value={data.ciriKeunikan}
             onChange={handleChange}
             disabled={isLoading}
           ></textarea>
@@ -185,7 +176,7 @@ export default function InputForm({ onSubmit, isLoading }: InputFormProps) {
             id="tawaran"
             name="tawaran"
             placeholder={t(lang, 'offerPlaceholder')}
-            value={formData.tawaran}
+            value={data.tawaran}
             onChange={handleChange}
             disabled={isLoading}
           />
@@ -202,8 +193,8 @@ export default function InputForm({ onSubmit, isLoading }: InputFormProps) {
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: '8px', 
-                background: formData.ctaType === type ? 'rgba(0, 240, 255, 0.1)' : 'var(--bg-secondary)',
-                border: `1px solid ${formData.ctaType === type ? 'var(--primary)' : 'var(--border)'}`,
+                background: data.ctaType === type ? 'rgba(0, 240, 255, 0.1)' : 'var(--bg-secondary)',
+                border: `1px solid ${data.ctaType === type ? 'var(--primary)' : 'var(--border)'}`,
                 padding: '10px',
                 borderRadius: '8px',
                 cursor: 'pointer',
@@ -214,8 +205,8 @@ export default function InputForm({ onSubmit, isLoading }: InputFormProps) {
                   type="radio" 
                   name="ctaType" 
                   value={type} 
-                  checked={formData.ctaType === type}
-                  onChange={(e) => setFormData(prev => ({ ...prev, ctaType: e.target.value }))}
+                  checked={data.ctaType === type}
+                  onChange={(e) => onChange({ ...data, ctaType: e.target.value })}
                   style={{ accentColor: 'var(--primary)' }}
                 />
                 {type}
@@ -227,12 +218,12 @@ export default function InputForm({ onSubmit, isLoading }: InputFormProps) {
             type="text"
             name="ctaValue"
             placeholder={t(lang, 'ctaPlaceholder')}
-            value={formData.ctaValue || ''}
+            value={data.ctaValue || ''}
             onChange={handleChange}
             style={{ marginTop: '12px' }}
             disabled={isLoading}
           />
-          {formData.ctaType === 'Datang ke Premis' && (
+          {data.ctaType === 'Datang ke Premis' && (
             <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '6px' }}>
               {t(lang, 'ctaTip')}
             </p>

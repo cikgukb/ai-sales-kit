@@ -36,3 +36,24 @@ export const saveToDatabase = async (data: SalesKitData) => {
   
   return result;
 };
+
+export const fetchUserHistory = async () => {
+  if (!supabase) return [];
+  
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user?.id) return [];
+
+  const { data, error } = await supabase
+    .from('sales_kit_generations')
+    .select('*')
+    // Option: if user_id is saved implicitly via RLS, we just select
+    // However, if RLS is strict, we just fetch.
+    .order('created_at', { ascending: false });
+    
+  if (error) {
+    console.error("Error fetching history:", error);
+    return [];
+  }
+  
+  return data as SalesKitData[];
+};
