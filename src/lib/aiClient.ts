@@ -1,6 +1,6 @@
 // Caching or extracting from env
 const getReplicateKey = () => import.meta.env.VITE_REPLICATE_API_TOKEN || localStorage.getItem('REPLICATE_API_TOKEN');
-const getImageRouterKey = () => import.meta.env.VITE_IMAGEROUTER_API_KEY || localStorage.getItem('IMAGEROUTER_API_KEY');
+
 
 import { supabase } from './supabase';
 
@@ -330,7 +330,7 @@ export const generateLandingPage = async (input: LandingPageInput): Promise<Land
    B) Tiada gambar → FLUX-1-schnell (jana poster dari prompt)
    ══════════════════════════════════════════════ */
 
-export const generateProductImage = async (imagePrompt: string, userImageBase64?: string, posterModel?: string): Promise<string> => {
+export const generateProductImage = async (imagePrompt: string, userImageBase64?: string, _posterModel?: string): Promise<string> => {
   if (supabase) {
     const { data: usageData, error: usageError } = await supabase.rpc('process_usage', { p_type: 'image' }) as { data: any, error: any };
     if (usageError || (usageData && !usageData.success)) {
@@ -382,10 +382,10 @@ async function generatePosterViaReplicate(apiKey: string, imagePrompt: string, b
       body: JSON.stringify(body)
     });
   } else {
-    response = await fetch(\`/replicate-api/v1/models/\${selectedModel}/predictions\`, {
+    response = await fetch(`/replicate-api/v1/models/${selectedModel}/predictions`, {
       method: "POST",
       headers: {
-        "Authorization": \`Bearer \${apiKey}\`,
+        "Authorization": `Bearer ${apiKey}`,
         "Content-Type": "application/json",
         "Prefer": "wait"
       },
@@ -401,7 +401,7 @@ async function generatePosterViaReplicate(apiKey: string, imagePrompt: string, b
       const parsed = JSON.parse(errorText);
       errMsg = parsed.error || parsed.detail || errorText;
     } catch(e) {}
-    throw new Error(\`Gagal menjana poster: \${errMsg}\`);
+    throw new Error(`Gagal menjana poster: ${errMsg}`);
   }
 
   const result = await response.json();
@@ -416,9 +416,8 @@ async function generatePosterViaReplicate(apiKey: string, imagePrompt: string, b
   }
   
   console.error("Empty data returned:", result);
-  throw new Error(\`Sistem AI menapis imej ini atau tiada hasil dikembalikan. Respon: \${JSON.stringify(result).substring(0,100)}\`);
+  throw new Error(`Sistem AI menapis imej ini atau tiada hasil dikembalikan. Respon: ${JSON.stringify(result).substring(0,100)}`);
 }
-    // Removed existing editImageIntoPoster and generatePosterFromPrompt blocks
 
 
 export const generateAdsStrategy = async (input: AdsStrategyInput): Promise<AdsStrategyResponse> => {
