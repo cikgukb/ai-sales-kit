@@ -8,6 +8,7 @@ import Auth from './components/Auth';
 import Footer from './components/Footer';
 import SettingsMenu from './components/SettingsMenu';
 import SessionManager from './components/SessionManager';
+import LoadingProgress from './components/LoadingProgress';
 import HistoryModal from './components/HistoryModal';
 import AdsStrategyInputForm from './components/AdsStrategyInput';
 import AdsStrategyDashboard from './components/AdsStrategyDashboard';
@@ -416,6 +417,12 @@ function App() {
                   isLoading={isLoading} 
                 />
               )}
+
+              {isLoading && (
+                <div className="animate-fade-in" style={{ marginTop: '24px' }}>
+                  <LoadingProgress type="sales-kit" />
+                </div>
+              )}
     
               {result && (
                 <div className="animate-fade-in">
@@ -448,7 +455,13 @@ function App() {
                   isLoading={isAdsLoading} 
                 />
               )}
-              
+
+              {isAdsLoading && (
+                <div className="animate-fade-in" style={{ marginTop: '24px' }}>
+                  <LoadingProgress type="ads-strategy" />
+                </div>
+              )}
+
               {adsResult && (
                 <div className="animate-fade-in">
                   <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
@@ -474,6 +487,12 @@ function App() {
                   onSubmit={processLandingPage} 
                   isLoading={isLandingPageLoading} 
                 />
+              )}
+
+              {isLandingPageLoading && (
+                <div className="animate-fade-in" style={{ marginTop: '24px' }}>
+                  <LoadingProgress type="landing-page" />
+                </div>
               )}
               
               {landingPageResult && (
