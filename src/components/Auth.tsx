@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Zap, Mail, Lock, User, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { Zap, Mail, Lock, User, ArrowRight, Loader2, AlertCircle, Beaker } from 'lucide-react';
 
 export default function Auth() {
   const [loading, setLoading] = useState(false);
@@ -9,6 +9,18 @@ export default function Auth() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [isTester, setIsTester] = useState(false);
+
+  useEffect(() => {
+    // Check url param for invite code
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('invite') === 'RAHSIA2026') {
+        setIsTester(true);
+        setView('signup'); // Force signup view for invites
+      }
+    }
+  }, []);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +39,10 @@ export default function Auth() {
           email,
           password,
           options: {
-            data: { full_name: fullName }
+            data: { 
+              full_name: fullName,
+              role: isTester ? 'tester' : 'customer'
+            }
           }
         });
         if (error) throw error;
@@ -61,6 +76,13 @@ export default function Auth() {
       <div className="hero-glow" style={{ width: '800px', height: '800px' }}></div>
       
       <div className="glass-card" style={{ width: '100%', maxWidth: '450px', padding: '3rem 2rem', border: '1px solid var(--border)', position: 'relative', zIndex: 1 }}>
+        
+        {isTester && view === 'signup' && (
+          <div style={{ position: 'absolute', top: '-14px', right: '24px', background: 'var(--primary)', color: '#000', padding: '4px 12px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '4px', boxShadow: '0 4px 12px rgba(0, 240, 255, 0.3)' }}>
+            <Beaker size={14} /> Beta Tester
+          </div>
+        )}
+
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', marginBottom: '2.5rem' }}>
           <Zap color="var(--primary)" fill="var(--primary)" size={32} />
           <h1 className="heading-xl text-gradient" style={{ fontSize: '2rem' }}>AI SALES KIT</h1>
@@ -75,6 +97,11 @@ export default function Auth() {
               ? 'Log masuk untuk mula menjana jualan anda.' 
               : 'Sertai ribuan usahawan yang guna AI untuk buat sales.'}
           </p>
+          {isTester && view === 'signup' && (
+            <p style={{ color: 'var(--primary)', fontSize: '0.875rem', marginTop: '0.5rem', fontWeight: 500 }}>
+              Pendaftaran khas beta tester (Percubaan Terhad).
+            </p>
+          )}
         </div>
 
         {error && (

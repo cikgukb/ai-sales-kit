@@ -36,6 +36,7 @@ function App() {
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [currentSalesData, setCurrentSalesData] = useState<SalesInput | null>(null);
   const [credits, setCredits] = useState<number | null>(null);
+  const [role, setRole] = useState<string>('customer');
   const [showTopUpPopup, setShowTopUpPopup] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [activeTab, setActiveTab] = useState<'sales-kit' | 'ads-strategy' | 'landing-page'>('sales-kit');
@@ -120,10 +121,13 @@ function App() {
     }));
   };
 
-  const fetchCredits = async (userId: string) => {
+  const fetchProfileData = async (userId: string) => {
     try {
-      const { data } = await supabase!.from('profiles').select('credits').eq('id', userId).single();
-      if (data) setCredits(data.credits);
+      const { data } = await supabase!.from('profiles').select('credits, role').eq('id', userId).single();
+      if (data) {
+        setCredits(data.credits);
+        setRole(data.role || 'customer');
+      }
     } catch { /* ignore */ }
   };
 
@@ -161,7 +165,7 @@ function App() {
   useEffect(() => {
     supabase?.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      if (session?.user) fetchCredits(session.user.id);
+      if (session?.user) fetchProfileData(session.user.id);
     });
 
     const { data: { subscription } } = supabase?.auth.onAuthStateChange((_event, session) => {
@@ -204,7 +208,7 @@ function App() {
       // NOTE: Make sure usage increments properly in DB if applicable
       const resp = await generateAdsStrategy(data);
       setAdsResult(resp);
-      if (session?.user) fetchCredits(session.user.id);
+      if (session?.user) fetchProfileData(session.user.id);
     } catch (e: any) {
       if (e.message && e.message.startsWith('INSUFFICIENT_CREDITS:')) {
         setShowTopUpPopup(true);
@@ -225,7 +229,7 @@ function App() {
       // NOTE: Make sure usage increments properly in DB if applicable
       const resp = await generateLandingPage(data);
       setLandingPageResult(resp);
-      if (session?.user) fetchCredits(session.user.id);
+      if (session?.user) fetchProfileData(session.user.id);
     } catch (e: any) {
       if (e.message && e.message.startsWith('INSUFFICIENT_CREDITS:')) {
         setShowTopUpPopup(true);
@@ -248,7 +252,7 @@ function App() {
     try {
       const aiResult = await generateSalesKit(data);
       setResult(aiResult);
-      if (session?.user) fetchCredits(session.user.id);
+      if (session?.user) fetchProfileData(session.user.id);
       // Wait for user to manually trigger image generation
     } catch (error: any) {
       if (error.message && error.message.startsWith('INSUFFICIENT_CREDITS:')) {
@@ -283,7 +287,7 @@ function App() {
         action_plan: result.actionPlan,
         gambar_url: url
       }).catch(e => console.error("DB Save Error:", e));
-      if (session?.user) fetchCredits(session.user.id);
+      if (session?.user) fetchProfileData(session.user.id);
       
     } catch (error: any) {
       console.error("Gagal mendapat gambar", error);
@@ -522,9 +526,13 @@ function App() {
                        <Coins size={48} color="#FFC107" />
                      </div>
                    </div>
-                   <h2 style={{ fontSize: '1.5rem', marginBottom: '0.75rem', fontWeight: 700 }}>Kredit Tidak Mencukupi!</h2>
+                   <h2 style={{ fontSize: '1.5rem', marginBottom: '0.75rem', fontWeight: 700 }}>
+                     {role === 'tester' ? 'Masa Percubaan Tamat!' : 'Kredit Tidak Mencukupi!'}
+                   </h2>
                    <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem', lineHeight: 1.6 }}>
-                     Baki kredit anda telah habis atau tidak cukup untuk janaan ini. Sila tambah nilai kredit untuk menggunakan AI Sales Kit tanpa batasan.
+                     {role === 'tester' 
+                       ? 'Wah, anda telah menggunakan kesemua kredit percubaan percuma anda! Sila naik taraf (upgrade) kepada Akaun Penuh (RM39) untuk terus menjana kit pemasaran.'
+                       : 'Baki kredit anda telah habis atau tidak cukup untuk janaan ini. Sila tambah nilai kredit untuk menggunakan AI Sales Kit tanpa batasan.'}
                    </p>
                    <button 
                      className="btn-primary" 
@@ -533,7 +541,7 @@ function App() {
                        alert('Integrasi Payment Gateway (Stripe/ToyyibPay) akan dimasukkan di sini.');
                      }}
                    >
-                     🚀 Tambah Kredit Sekarang
+                     {role === 'tester' ? '🚀 Naik Taraf ke Akaun PRO' : '🚀 Tambah Kredit Sekarang'}
                    </button>
                    <button 
                      className="btn-outline" 
