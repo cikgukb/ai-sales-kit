@@ -171,7 +171,7 @@ function App() {
     const { data: { subscription } } = supabase?.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session?.user) {
-        fetchCredits(session.user.id);
+        fetchProfileData(session.user.id);
       } else {
         resetAllStates();
       }
