@@ -1,8 +1,8 @@
 import { useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 
-// 30 min in ms
-const IDLE_TIMEOUT_MS = 30 * 60 * 1000;
+// 1 hour in ms
+const IDLE_TIMEOUT_MS = 60 * 60 * 1000;
 // 24 hours in ms
 const SESSION_EXPIRY_MS = 24 * 60 * 60 * 1000;
 
@@ -34,7 +34,7 @@ export default function SessionManager() {
       
       // 1. Check Idle Timeout
       if (lastActiveRaw && now - parseInt(lastActiveRaw) > IDLE_TIMEOUT_MS) {
-        alert("Sesi ditamatkan kerana tiada aktiviti selama 30 minit. Sila log masuk semula.");
+        alert("Sesi ditamatkan kerana tiada aktiviti selama 1 jam. Sila log masuk semula.");
         handleLogout();
         return;
       }

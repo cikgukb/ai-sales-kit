@@ -36,16 +36,16 @@ export default async function handler(req, res) {
       const pollUrl = data.urls.get;
       for (let i = 0; i < 60; i++) {
         await new Promise(r => setTimeout(r, 2000));
-        
+
         const pollRes = await fetch(pollUrl, {
           headers: { 'Authorization': `Bearer ${REPLICATE_KEY}` }
         });
-        
+
         if (!pollRes.ok) continue;
-        
+
         data = await pollRes.json();
         console.log(`Poll attempt ${i + 1}: status=${data.status}`);
-        
+
         if (data.status === 'succeeded' && data.output) break;
         if (data.status === 'failed' || data.status === 'canceled') {
           return res.status(500).json({ error: data.error || 'Prediction failed' });
