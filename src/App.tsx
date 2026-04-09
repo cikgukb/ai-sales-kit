@@ -409,7 +409,7 @@ function App() {
 
           {activeTab === 'sales-kit' && (
             <>
-              {!result && (
+              {!result && !isLoading && (
                 <InputForm 
                   data={salesFormData} 
                   onChange={handleSalesDataChange} 
@@ -419,7 +419,7 @@ function App() {
               )}
 
               {isLoading && (
-                <div className="animate-fade-in" style={{ marginTop: '24px' }}>
+                <div className="animate-fade-in">
                   <LoadingProgress type="sales-kit" />
                 </div>
               )}
@@ -447,7 +447,7 @@ function App() {
 
           {activeTab === 'ads-strategy' && (
             <>
-              {!adsResult && (
+              {!adsResult && !isAdsLoading && (
                 <AdsStrategyInputForm 
                   data={adsFormData} 
                   onChange={handleAdsDataChange} 
@@ -457,7 +457,7 @@ function App() {
               )}
 
               {isAdsLoading && (
-                <div className="animate-fade-in" style={{ marginTop: '24px' }}>
+                <div className="animate-fade-in">
                   <LoadingProgress type="ads-strategy" />
                 </div>
               )}
@@ -480,7 +480,7 @@ function App() {
 
           {activeTab === 'landing-page' && (
             <>
-              {!landingPageResult && (
+              {!landingPageResult && !isLandingPageLoading && (
                 <LandingPageInputForm 
                   data={landingPageFormData} 
                   onChange={handleLandingPageDataChange} 
@@ -490,7 +490,7 @@ function App() {
               )}
 
               {isLandingPageLoading && (
-                <div className="animate-fade-in" style={{ marginTop: '24px' }}>
+                <div className="animate-fade-in">
                   <LoadingProgress type="landing-page" />
                 </div>
               )}
