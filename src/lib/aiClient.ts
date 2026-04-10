@@ -133,9 +133,15 @@ export const generateSalesKit = async (input: SalesInput): Promise<GenerateRespo
     }
   }
 
-  const replicateKey = getReplicateKey();
-  if (!replicateKey) {
-    throw new Error('Replicate API Key tidak ditemui. Sila masukkan di tetapan.');
+  // Production: /api/replicate uses server-side REPLICATE_API_TOKEN (browser tidak perlu key).
+  // Dev: kita perlu VITE_REPLICATE_API_TOKEN dalam .env untuk Vite proxy direct ke Replicate.
+  let replicateKey = '';
+  if (!isProduction()) {
+    const key = getReplicateKey();
+    if (!key) {
+      throw new Error('Replicate API Key tidak ditemui untuk local dev. Sila tambah VITE_REPLICATE_API_TOKEN dalam .env.');
+    }
+    replicateKey = key;
   }
 
   const prompt = `
@@ -238,10 +244,18 @@ export const generateSalesKit = async (input: SalesInput): Promise<GenerateRespo
 
   let prediction = await response.json();
   
-  // If Prefer: wait timed out, poll until completion
+  // If Prefer: wait timed out, poll until completion.
+  // Production: /api/replicate handles polling server-side (lihat api/replicate.js).
+  // Dev: kita poll terus via Vite proxy yang perlukan VITE_REPLICATE_API_TOKEN.
   if (!prediction.output && prediction.status !== 'succeeded') {
-    const replicateKey = getReplicateKey();
-    prediction = await pollPrediction(prediction, replicateKey!);
+    if (isProduction()) {
+      throw new Error(`Tiada output dari Claude. Status: ${prediction.status}, Error: ${prediction.error || 'none'}`);
+    }
+    const devKey = getReplicateKey();
+    if (!devKey) {
+      throw new Error('Polling memerlukan VITE_REPLICATE_API_TOKEN dalam .env untuk local dev.');
+    }
+    prediction = await pollPrediction(prediction, devKey);
   }
 
   if (!prediction.output) {
@@ -274,9 +288,15 @@ export const generateLandingPage = async (input: LandingPageInput): Promise<Land
     }
   }
 
-  const replicateKey = getReplicateKey();
-  if (!replicateKey) {
-    throw new Error('Replicate API Key tidak ditemui. Sila masukkan di tetapan.');
+  // Production: /api/replicate uses server-side REPLICATE_API_TOKEN (browser tidak perlu key).
+  // Dev: kita perlu VITE_REPLICATE_API_TOKEN dalam .env untuk Vite proxy direct ke Replicate.
+  let replicateKey = '';
+  if (!isProduction()) {
+    const key = getReplicateKey();
+    if (!key) {
+      throw new Error('Replicate API Key tidak ditemui untuk local dev. Sila tambah VITE_REPLICATE_API_TOKEN dalam .env.');
+    }
+    replicateKey = key;
   }
 
   const prompt = `
@@ -359,10 +379,18 @@ export const generateLandingPage = async (input: LandingPageInput): Promise<Land
 
   let prediction = await response.json();
   
-  // If Prefer: wait timed out, poll until completion
+  // If Prefer: wait timed out, poll until completion.
+  // Production: /api/replicate handles polling server-side (lihat api/replicate.js).
+  // Dev: kita poll terus via Vite proxy yang perlukan VITE_REPLICATE_API_TOKEN.
   if (!prediction.output && prediction.status !== 'succeeded') {
-    const replicateKey = getReplicateKey();
-    prediction = await pollPrediction(prediction, replicateKey!);
+    if (isProduction()) {
+      throw new Error(`Tiada output dari Claude. Status: ${prediction.status}, Error: ${prediction.error || 'none'}`);
+    }
+    const devKey = getReplicateKey();
+    if (!devKey) {
+      throw new Error('Polling memerlukan VITE_REPLICATE_API_TOKEN dalam .env untuk local dev.');
+    }
+    prediction = await pollPrediction(prediction, devKey);
   }
 
   if (!prediction.output) {
@@ -401,9 +429,15 @@ export const generateProductImage = async (imagePrompt: string, userImageBase64?
     }
   }
 
-  const replicateKey = getReplicateKey();
-  if (!replicateKey) {
-    throw new Error('Replicate API Key tidak ditemui. Sila masukkan di .env.');
+  // Production: /api/imagegen uses server-side REPLICATE_API_TOKEN (browser tidak perlu key).
+  // Dev: kita perlu VITE_REPLICATE_API_TOKEN dalam .env untuk Vite proxy direct ke Replicate.
+  let replicateKey = '';
+  if (!isProduction()) {
+    const key = getReplicateKey();
+    if (!key) {
+      throw new Error('Replicate API Key tidak ditemui untuk local dev. Sila tambah VITE_REPLICATE_API_TOKEN dalam .env.');
+    }
+    replicateKey = key;
   }
 
   try {
@@ -492,9 +526,15 @@ export const generateAdsStrategy = async (input: AdsStrategyInput): Promise<AdsS
     }
   }
 
-  const replicateKey = getReplicateKey();
-  if (!replicateKey) {
-    throw new Error('Replicate API Key tidak ditemui. Sila masukkan di tetapan.');
+  // Production: /api/replicate uses server-side REPLICATE_API_TOKEN (browser tidak perlu key).
+  // Dev: kita perlu VITE_REPLICATE_API_TOKEN dalam .env untuk Vite proxy direct ke Replicate.
+  let replicateKey = '';
+  if (!isProduction()) {
+    const key = getReplicateKey();
+    if (!key) {
+      throw new Error('Replicate API Key tidak ditemui untuk local dev. Sila tambah VITE_REPLICATE_API_TOKEN dalam .env.');
+    }
+    replicateKey = key;
   }
 
   const prompt = `
@@ -568,10 +608,18 @@ export const generateAdsStrategy = async (input: AdsStrategyInput): Promise<AdsS
 
   let prediction = await response.json();
 
-  // If Prefer: wait timed out, poll until completion
+  // If Prefer: wait timed out, poll until completion.
+  // Production: /api/replicate handles polling server-side (lihat api/replicate.js).
+  // Dev: kita poll terus via Vite proxy yang perlukan VITE_REPLICATE_API_TOKEN.
   if (!prediction.output && prediction.status !== 'succeeded') {
-    const replicateKey = getReplicateKey();
-    prediction = await pollPrediction(prediction, replicateKey!);
+    if (isProduction()) {
+      throw new Error(`Tiada output dari Claude. Status: ${prediction.status}, Error: ${prediction.error || 'none'}`);
+    }
+    const devKey = getReplicateKey();
+    if (!devKey) {
+      throw new Error('Polling memerlukan VITE_REPLICATE_API_TOKEN dalam .env untuk local dev.');
+    }
+    prediction = await pollPrediction(prediction, devKey);
   }
 
   if (!prediction.output) {
