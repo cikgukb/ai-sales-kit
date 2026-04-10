@@ -18,7 +18,7 @@ async function pollPrediction(prediction: any, apiKey: string, maxAttempts = 60)
     return prediction;
   }
   if (prediction.status === 'failed' || prediction.status === 'canceled') {
-    throw new Error(`Prediction ${prediction.status}: ${prediction.error || 'Unknown error'}`);
+    throw new Error('AI gagal memproses permintaan anda. Sila cuba lagi.');
   }
 
   const pollUrl = prediction.urls?.get;
@@ -42,7 +42,7 @@ async function pollPrediction(prediction: any, apiKey: string, maxAttempts = 60)
       return updated;
     }
     if (updated.status === 'failed' || updated.status === 'canceled') {
-      throw new Error(`Prediction ${updated.status}: ${updated.error || 'Unknown error'}`);
+      throw new Error('AI gagal memproses permintaan anda. Sila cuba lagi.');
     }
   }
 
@@ -239,7 +239,7 @@ export const generateSalesKit = async (input: SalesInput): Promise<GenerateRespo
   if (!response.ok) {
     const errorText = await response.text();
     console.error("Replicate Claude Error:", response.status, errorText);
-    throw new Error(`Gagal memanggil Claude (${response.status}): ${errorText.substring(0, 200)}`);
+    throw new Error('Ralat komunikasi dengan AI. Sila cuba lagi sebentar.');
   }
 
   let prediction = await response.json();
@@ -249,7 +249,7 @@ export const generateSalesKit = async (input: SalesInput): Promise<GenerateRespo
   // Dev: kita poll terus via Vite proxy yang perlukan VITE_REPLICATE_API_TOKEN.
   if (!prediction.output && prediction.status !== 'succeeded') {
     if (isProduction()) {
-      throw new Error(`Tiada output dari Claude. Status: ${prediction.status}, Error: ${prediction.error || 'none'}`);
+      throw new Error('AI tidak dapat menjana kandungan kali ini. Sila cuba lagi.');
     }
     const devKey = getReplicateKey();
     if (!devKey) {
@@ -259,7 +259,7 @@ export const generateSalesKit = async (input: SalesInput): Promise<GenerateRespo
   }
 
   if (!prediction.output) {
-     throw new Error(`Tiada output dari Claude. Status: ${prediction.status}, Error: ${prediction.error || 'none'}`);
+     throw new Error('AI tidak dapat menjana kandungan kali ini. Sila cuba lagi.');
   }
 
   const responseText = Array.isArray(prediction.output) ? prediction.output.join("") : prediction.output;
@@ -374,7 +374,7 @@ export const generateLandingPage = async (input: LandingPageInput): Promise<Land
   if (!response.ok) {
     const errorText = await response.text();
     console.error("Replicate Claude Error (Landing Page):", response.status, errorText);
-    throw new Error(`Gagal memanggil Claude (${response.status}): ${errorText.substring(0, 200)}`);
+    throw new Error('Ralat komunikasi dengan AI. Sila cuba lagi sebentar.');
   }
 
   let prediction = await response.json();
@@ -384,7 +384,7 @@ export const generateLandingPage = async (input: LandingPageInput): Promise<Land
   // Dev: kita poll terus via Vite proxy yang perlukan VITE_REPLICATE_API_TOKEN.
   if (!prediction.output && prediction.status !== 'succeeded') {
     if (isProduction()) {
-      throw new Error(`Tiada output dari Claude. Status: ${prediction.status}, Error: ${prediction.error || 'none'}`);
+      throw new Error('AI tidak dapat menjana kandungan kali ini. Sila cuba lagi.');
     }
     const devKey = getReplicateKey();
     if (!devKey) {
@@ -394,7 +394,7 @@ export const generateLandingPage = async (input: LandingPageInput): Promise<Land
   }
 
   if (!prediction.output) {
-     throw new Error(`Tiada output dari Claude. Status: ${prediction.status}, Error: ${prediction.error || 'none'}`);
+     throw new Error('AI tidak dapat menjana kandungan kali ini. Sila cuba lagi.');
   }
 
   const responseText = Array.isArray(prediction.output) ? prediction.output.join("") : prediction.output;
@@ -493,12 +493,7 @@ async function generatePosterViaReplicate(apiKey: string, imagePrompt: string, b
   if (!response.ok) {
     const errorText = await response.text();
     console.error("Replicate Image Error:", response.status, errorText);
-    let errMsg = "Ralat penjanaan Replicate";
-    try {
-      const parsed = JSON.parse(errorText);
-      errMsg = parsed.error || parsed.detail || errorText;
-    } catch(e) {}
-    throw new Error(`Gagal menjana poster (${response.status}): ${errMsg}`);
+    throw new Error('Gagal menjana poster iklan. Sila cuba lagi.');
   }
 
   const result = await response.json();
@@ -513,7 +508,7 @@ async function generatePosterViaReplicate(apiKey: string, imagePrompt: string, b
   }
   
   console.error("Empty data returned:", result);
-  throw new Error(`Sistem AI menapis imej ini atau tiada hasil dikembalikan. Respon: ${JSON.stringify(result).substring(0,100)}`);
+  throw new Error('Poster gagal dijana. Sila cuba lagi atau gunakan prompt yang berbeza.');
 }
 
 
@@ -603,7 +598,7 @@ export const generateAdsStrategy = async (input: AdsStrategyInput): Promise<AdsS
   if (!response.ok) {
     const errorText = await response.text();
     console.error("Replicate Error (Ads Strategy):", response.status, errorText);
-    throw new Error(`Gagal memanggil Claude (${response.status}): ${errorText.substring(0, 200)}`);
+    throw new Error('Ralat komunikasi dengan AI. Sila cuba lagi sebentar.');
   }
 
   let prediction = await response.json();
@@ -613,7 +608,7 @@ export const generateAdsStrategy = async (input: AdsStrategyInput): Promise<AdsS
   // Dev: kita poll terus via Vite proxy yang perlukan VITE_REPLICATE_API_TOKEN.
   if (!prediction.output && prediction.status !== 'succeeded') {
     if (isProduction()) {
-      throw new Error(`Tiada output dari Claude. Status: ${prediction.status}, Error: ${prediction.error || 'none'}`);
+      throw new Error('AI tidak dapat menjana kandungan kali ini. Sila cuba lagi.');
     }
     const devKey = getReplicateKey();
     if (!devKey) {
@@ -623,7 +618,7 @@ export const generateAdsStrategy = async (input: AdsStrategyInput): Promise<AdsS
   }
 
   if (!prediction.output) {
-    throw new Error(`Tiada output dari Claude. Status: ${prediction.status}, Error: ${prediction.error || 'none'}`);
+    throw new Error('AI tidak dapat menjana kandungan kali ini. Sila cuba lagi.');
   }
 
   const responseText = Array.isArray(prediction.output) ? prediction.output.join("") : prediction.output;
