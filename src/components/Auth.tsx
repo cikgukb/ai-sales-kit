@@ -22,6 +22,34 @@ export default function Auth() {
     }
   }, []);
 
+  const handleResendConfirmation = async () => {
+    if (!supabase) {
+      setError("Supabase belum dikonfigurasi.");
+      return;
+    }
+    if (!email) {
+      setError("Sila masukkan emel anda dahulu.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+        },
+      });
+      if (error) throw error;
+      setError(null);
+      alert("Emel pengesahan dihantar semula. Sila semak inbox/spam anda (mungkin ambil masa 1-2 minit).");
+    } catch (err: any) {
+      setError(err.message || "Gagal menghantar semula emel pengesahan.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -35,18 +63,28 @@ export default function Auth() {
 
     try {
       if (view === 'signup') {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            data: { 
+            emailRedirectTo: `${window.location.origin}/`,
+            data: {
               full_name: fullName,
               role: isTester ? 'tester' : 'customer'
             }
           }
         });
         if (error) throw error;
-        alert("Pendaftaran berjaya! Sila semak emel anda untuk pengesahan.");
+        // Supabase returns data.user with empty identities[] when the email
+        // already exists (obfuscated response to prevent email enumeration).
+        // In that case NO confirmation email is sent — we must tell the user
+        // instead of misleading them to wait for an email that never comes.
+        if (data.user && data.user.identities && data.user.identities.length === 0) {
+          setError("Emel ini sudah berdaftar. Sila log masuk di bawah. Kalau belum terima link pengesahan, klik 'Hantar semula emel pengesahan'.");
+          setView('login');
+          return;
+        }
+        alert("Pendaftaran berjaya! Sila semak emel anda (termasuk folder Spam/Junk) untuk pengesahan.");
       } else {
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
@@ -65,7 +103,20 @@ export default function Auth() {
         }
       }
     } catch (err: any) {
-      setError(err.message || "Terdapat ralat semasa proses.");
+      const rawMsg = err.message || "";
+      const msg = rawMsg.toLowerCase();
+      if (msg.includes('email not confirmed')) {
+        setError("Emel anda belum disahkan. Sila semak inbox/spam untuk link pengesahan, atau klik 'Hantar semula emel pengesahan' di bawah.");
+      } else if (msg.includes('invalid login') || msg.includes('invalid credentials')) {
+        setError("Emel atau kata laluan salah. Kalau baru mendaftar, pastikan emel sudah disahkan dulu.");
+      } else if (msg.includes('already registered') || msg.includes('user already')) {
+        setError("Emel ini sudah berdaftar. Sila log masuk atau reset kata laluan anda.");
+        setView('login');
+      } else if (msg.includes('rate limit') || msg.includes('too many')) {
+        setError("Terlalu banyak cubaan. Sila tunggu beberapa minit sebelum cuba lagi.");
+      } else {
+        setError(rawMsg || "Terdapat ralat semasa proses.");
+      }
     } finally {
       setLoading(false);
     }
@@ -105,9 +156,21 @@ export default function Auth() {
         </div>
 
         {error && (
-          <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#fca5a5', padding: '12px', borderRadius: '8px', marginBottom: '1.5rem', fontSize: '0.875rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <AlertCircle size={16} />
-            {error}
+          <div style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#fca5a5', padding: '12px', borderRadius: '8px', marginBottom: '1.5rem', fontSize: '0.875rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
+              <AlertCircle size={16} style={{ flexShrink: 0, marginTop: 2 }} />
+              <span>{error}</span>
+            </div>
+            {(error.toLowerCase().includes('belum disahkan') || error.toLowerCase().includes('sudah berdaftar')) && email && (
+              <button
+                type="button"
+                onClick={handleResendConfirmation}
+                disabled={loading}
+                style={{ alignSelf: 'flex-start', background: 'none', border: 'none', color: 'var(--primary)', cursor: loading ? 'not-allowed' : 'pointer', textDecoration: 'underline', fontSize: '0.875rem', padding: 0, fontWeight: 600, marginLeft: '1.5rem' }}
+              >
+                {loading ? 'Menghantar...' : 'Hantar semula emel pengesahan'}
+              </button>
+            )}
           </div>
         )}
 
