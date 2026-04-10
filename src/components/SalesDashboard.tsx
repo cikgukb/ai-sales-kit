@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Copy, Download, Image as ImageIcon, MessageCircle, PenTool, CheckCircle, Smartphone, Lightbulb, BarChart3, Zap, Info } from 'lucide-react';
+import { Copy, Download, Image as ImageIcon, MessageCircle, PenTool, CheckCircle, Smartphone, Lightbulb, BarChart3, Zap, Info, Loader2 } from 'lucide-react';
 import type { GenerateResponse } from '../lib/aiClient';
+import { generateSalesKitPDF } from '../lib/pdfExport';
 import { useSettings } from '../lib/SettingsContext';
 import { t } from '../lib/i18n';
 
@@ -146,6 +148,7 @@ const formatExtraFeaturesText = (parsed: { tikTokIdeas: string[]; headlineTest: 
    ══════════════════════════════ */
 export default function SalesDashboard({ data, imageUrl, onGenerateImage, isGeneratingImage }: SalesDashboardProps) {
   const { lang } = useSettings();
+  const [isPdfExporting, setIsPdfExporting] = useState(false);
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -473,30 +476,24 @@ export default function SalesDashboard({ data, imageUrl, onGenerateImage, isGene
           <Download size={18} /> {t(lang, 'downloadAll')}
         </button>
 
-        <button 
+        <button
           onClick={async () => {
-            const element = document.querySelector('.dashboard-grid') as HTMLElement;
-            if (!element) return;
-            // hide buttons during export
-            const buttons = element.querySelectorAll('button');
-            buttons.forEach(b => b.style.display = 'none');
-            
-            const html2pdf = (await import('html2pdf.js')).default;
-            await html2pdf().set({
-              margin: 10,
-              filename: 'ai-sales-kit-penuh.pdf',
-              image: { type: 'jpeg', quality: 0.98 },
-              html2canvas: { scale: 2, useCORS: true },
-              jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            }).from(element).save();
-
-            // restore buttons
-            buttons.forEach(b => b.style.display = '');
-          }} 
-          className="btn-outline" 
+            setIsPdfExporting(true);
+            try {
+              await generateSalesKitPDF(data, imageUrl);
+            } catch (err) {
+              console.error('PDF export error:', err);
+              alert('Gagal menjana PDF. Sila cuba lagi.');
+            } finally {
+              setIsPdfExporting(false);
+            }
+          }}
+          className="btn-outline"
           style={{ padding: '14px 40px', fontSize: '1rem', borderRadius: '12px', borderColor: 'var(--primary)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', margin: '0 auto' }}
+          disabled={isPdfExporting}
         >
-          <Download size={18} /> Muat Turun Report (PDF)
+          {isPdfExporting ? <Loader2 size={18} className="spinner" /> : <Download size={18} />}
+          {isPdfExporting ? 'Menjana PDF...' : 'Muat Turun Report (PDF)'}
         </button>
       </div>
 
